@@ -26,6 +26,7 @@
 
 #pragma once
 
+#include <memory>
 
 namespace yafiyogi::values {
 
@@ -47,7 +48,8 @@ class Action
     constexpr Action & operator=(Action &&) noexcept = default;
 
     virtual void Run(const values::Store & store) noexcept = 0;
-    virtual void Inputs
 };
+
+using ActionPtr = std::unique_ptr<Action>;
 
 } // namespace yafifogi::mendel
