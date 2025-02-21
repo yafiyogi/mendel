@@ -25,15 +25,15 @@
 */
 
 #include "spdlog/spdlog.h"
-#include "yaml-cpp/yaml.h"
+
 
 #include "yy_cpp/yy_string_case.h"
 #include "yy_cpp/yy_string_util.h"
 #include "yy_cpp/yy_make_lookup.h"
+#include "yy_cpp/yy_yaml_util.h"
 
 #include "configure_logging.h"
 #include "logger.h"
-#include "yaml_util.h"
 
 namespace yafiyogi::mendel {
 namespace {
@@ -59,13 +59,13 @@ logger_config configure_logging(const YAML::Node & yaml_logging,
 {
   if(yaml_logging)
   {
-    if(auto log = util::yaml_get_optional_value<std::string_view>(yaml_logging["filename"sv]);
+    if(auto log = yy_util::yaml_get_optional_value<std::string_view>(yaml_logging["filename"sv]);
        log.has_value())
     {
       log_config.filename = log.value();
     }
 
-    if(auto level = util::yaml_get_optional_value<std::string_view>(yaml_logging["level"sv]);
+    if(auto level = yy_util::yaml_get_optional_value<std::string_view>(yaml_logging["level"sv]);
        level.has_value())
     {
       log_config.level = log_levels.lookup(yy_util::to_lower(yy_util::trim(level.value())), spdlog::level::info);

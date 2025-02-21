@@ -29,18 +29,17 @@
 #include "absl/strings/string_view.h"
 #include "re2/re2.h"
 #include "spdlog/spdlog.h"
-#include "yaml-cpp/yaml.h"
 
 #include "yy_cpp/yy_fast_atoi.h"
 #include "yy_cpp/yy_make_lookup.h"
 #include "yy_cpp/yy_string_util.h"
+#include "yy_cpp/yy_yaml_util.h"
 
 #include "yy_mqtt/yy_mqtt_util.h"
 
 #include "configure_label_actions.h"
 #include "label_action.h"
 #include "replacement_format.h"
-#include "yaml_util.h"
 
 namespace yafiyogi::values {
 
@@ -129,14 +128,14 @@ ReplacementTopics configure_label_action_replace_path(const YAML::Node & yaml_re
       std::string_view replacement_pattern{"#"};
       std::string_view replacement_format{};
 
-      if(util::yaml_is_scalar(yaml_format))
+      if(yy_util::yaml_is_scalar(yaml_format))
       {
-        replacement_format = util::yaml_get_value<std::string_view>(yaml_format);
+        replacement_format = yy_util::yaml_get_value<std::string_view>(yaml_format);
       }
       else
       {
-        replacement_pattern = yy_util::trim(util::yaml_get_value(yaml_format["pattern"sv], "#"sv));
-        replacement_format = yy_util::trim(util::yaml_get_value<std::string_view>(yaml_format["format"sv]));
+        replacement_pattern = yy_util::trim(yy_util::yaml_get_value(yaml_format["pattern"sv], "#"sv));
+        replacement_format = yy_util::trim(yy_util::yaml_get_value<std::string_view>(yaml_format["format"sv]));
       }
 
       if(yy_mqtt::TopicValidStatus::Valid == yy_mqtt::topic_validate(replacement_pattern, yy_mqtt::TopicType::Filter))

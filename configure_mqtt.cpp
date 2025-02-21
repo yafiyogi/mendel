@@ -27,13 +27,13 @@
 #include <string>
 
 #include "spdlog/spdlog.h"
-#include "yaml-cpp/yaml.h"
+
+#include "yy_cpp/yy_yaml_util.h"
 
 #include "configure_mqtt_handlers.h"
 #include "configure_mqtt_topics.h"
 #include "mqtt_handler.h"
 #include "values_config.h"
-#include "yaml_util.h"
 
 #include "configure_mqtt.h"
 
@@ -53,7 +53,7 @@ mqtt_config configure_mqtt(const YAML::Node & yaml_mqtt,
   }
   auto host = yaml_host.as<std::string_view>();
 
-  int port = util::yaml_get_value(yaml_mqtt["port"sv], yy_mqtt::mqtt_default_port);
+  int port = yy_util::yaml_get_value(yaml_mqtt["port"sv], yy_mqtt::mqtt_default_port);
 
   spdlog::info(" MQTT host=[{}] port=[{}]"sv, host, port);
 

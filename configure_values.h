@@ -26,8 +26,9 @@
 
 #pragma once
 
+#include "yy_tp_util/yaml_fwd.h"
+
 #include "values_metric.h"
-#include "yaml_fwd.h"
 
 namespace yafiyogi::values {
 

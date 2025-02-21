@@ -30,18 +30,17 @@
 #include "fmt/format.h"
 #include "fmt/compile.h"
 #include "spdlog/spdlog.h"
-#include "yaml-cpp/yaml.h"
 
 #include "yy_cpp/yy_flat_set.h"
 #include "yy_cpp/yy_make_lookup.h"
 #include "yy_cpp/yy_string_case.h"
 #include "yy_cpp/yy_string_util.h"
+#include "yy_cpp/yy_yaml_util.h"
 
 #include "mqtt_handler.h"
 #include "mqtt_handler_json.h"
 #include "mqtt_handler_value.h"
 #include "values_config.h"
-#include "yaml_util.h"
 
 #include "configure_mqtt_handlers.h"
 
@@ -63,7 +62,7 @@ constexpr auto handler_types =
 MqttHandler::type decode_type(const YAML::Node & yaml_type)
 {
 
-  std::string type_name{yy_util::to_lower(yy_util::trim(util::yaml_get_value<std::string_view>(yaml_type)))};
+  std::string type_name{yy_util::to_lower(yy_util::trim(yy_util::yaml_get_value<std::string_view>(yaml_type)))};
 
   return handler_types.lookup(type_name);
 }
@@ -200,62 +199,63 @@ MqttHandlerPtr configure_value_handler(std::string_view p_id,
 MqttHandlerStore configure_mqtt_handlers(const YAML::Node & yaml_handlers,
                                          values::MetricsMap & values_config)
 {
+  MqttHandlerStore handler_store{};
+
   if(!yaml_handlers.IsSequence())
   {
     spdlog::error("Configuration error: expecting a sequence of handlers!"sv);
-
-    return MqttHandlerStore{};
   }
-
-  MqttHandlerStore handler_store{};
-  handler_store.reserve(yaml_handlers.size());
-
-  for(const auto & yaml_handler: yaml_handlers)
+  else
   {
-    std::string_view l_id{yy_util::trim(yaml_handler["id"sv].as<std::string_view>())};
-    const MqttHandler::type type = decode_type(yaml_handler["type"sv]);
+    handler_store.reserve(yaml_handlers.size());
 
-    spdlog::info(" Configuring MQTT Handler id [{}]:"sv, l_id);
-    spdlog::trace("  [line {}]."sv, yaml_handler.Mark().line + 1);
-    MqttHandlerPtr handler;
-
-    spdlog::info("   - type [{}]"sv, yaml_handler["type"sv].as<std::string_view>());
-    switch(type)
+    for(const auto & yaml_handler: yaml_handlers)
     {
-      case MqttHandler::type::Json:
-        handler = configure_json_handler(l_id, yaml_handler, values_config);
-        break;
+      std::string_view l_id{yy_util::trim(yaml_handler["id"sv].as<std::string_view>())};
+      const MqttHandler::type type = decode_type(yaml_handler["type"sv]);
 
-      case MqttHandler::type::Text:
-        handler = configure_text_handler(l_id, yaml_handler, values_config);
-        break;
+      spdlog::info(" Configuring MQTT Handler id [{}]:"sv, l_id);
+      spdlog::trace("  [line {}]."sv, yaml_handler.Mark().line + 1);
+      MqttHandlerPtr handler;
 
-      case MqttHandler::type::Value:
-        handler = configure_value_handler(l_id, yaml_handler, values_config);
-        break;
-    }
-
-    if(handler)
-    {
-      if(const auto & id = handler->Id();
-         !id.empty())
+      spdlog::info("   - type [{}]"sv, yaml_handler["type"sv].as<std::string_view>());
+      switch(type)
       {
-        if(auto [handler_pos, emplaced] = handler_store.emplace(std::move(id), std::move(handler));
-           !emplaced)
+        case MqttHandler::type::Json:
+          handler = configure_json_handler(l_id, yaml_handler, values_config);
+          break;
+
+        case MqttHandler::type::Text:
+          handler = configure_text_handler(l_id, yaml_handler, values_config);
+          break;
+
+        case MqttHandler::type::Value:
+          handler = configure_value_handler(l_id, yaml_handler, values_config);
+          break;
+      }
+
+      if(handler)
+      {
+        if(const auto & id = handler->Id();
+           !id.empty())
         {
-          if(auto [key, added] = handler_store[handler_pos];
-             !added)
+          if(auto [handler_pos, emplaced] = handler_store.emplace(std::move(id), std::move(handler));
+             !emplaced)
           {
-            spdlog::trace("Handler id [{}] already created. Ignoring [line {}]"sv,
-                          key,
-                          yaml_handler.Mark().line + 1);
+            if(auto [key, added] = handler_store[handler_pos];
+               !added)
+            {
+              spdlog::trace("Handler id [{}] already created. Ignoring [line {}]"sv,
+                            key,
+                            yaml_handler.Mark().line + 1);
+            }
           }
         }
       }
-    }
-    else
-    {
-      spdlog::warn("MQTT Handler id [{}] not created!"sv, l_id);
+      else
+      {
+        spdlog::warn("MQTT Handler id [{}] not created!"sv, l_id);
+      }
     }
   }
 
