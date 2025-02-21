@@ -33,6 +33,13 @@ namespace yafiyogi::mendel::actions {
 class var_idx final
 {
   public:
+    constexpr var_idx(const std::string & p_var,
+                      size_type p_idx) noexcept:
+      m_var(p_var),
+      m_idx(p_idx)
+    {
+    }
+
     constexpr var_idx(std::string && p_var,
                       size_type p_idx) noexcept:
       m_var(std::move(p_var)),
