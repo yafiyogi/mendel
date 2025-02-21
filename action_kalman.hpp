@@ -44,8 +44,9 @@ class KalmanAction final:
       public Action
 {
   public:
-    KalmanAction(const KalmanOptions & p_options);
-    void run(const values::Store & store) noexcept override;
+    KalmanAction(std::string && p_output_topic,
+                 const KalmanOptions & p_options);
+    void Run(const values::Store & store) noexcept override;
 
   private:
     using ekf = yy_maths::ekf;
@@ -57,7 +58,7 @@ class KalmanAction final:
     vector m_observations{};
     vector m_hx{};
 
-    std::string m_output_topic;
+    std::string m_output_topic{};
     using VarIdxVector = yy_quad::simple_vector<var_idx>;
     VarIdxVector m_outputs{};
     VarIdxVector m_inputs{};

@@ -1,4 +1,3 @@
-k
 /*
 
   MIT License
@@ -38,11 +37,11 @@ KalmanAction::KalmanAction(std::string && p_output_topic,
 {
   // Initialise outputs.
   size_type idx_n = 0;
-  p_output_options.visit([&idx_n, this](auto & /* input_id */, auto & output_id) {
-    if(auto output = yy_data::find_iter(m_outputs, output_id);
+  p_options.visit([&idx_n, this](auto & /* input_id */, const auto & output_id) {
+    if(auto output{yy_data::find_iter(m_outputs, output_id)};
        !output.found)
     {
-      m_outputs.emplace(output.iter, std::string{value}, idx_n);
+      m_outputs.emplace(output.iter, output_id, idx_n);
       ++idx_n;
     }
   });
@@ -52,14 +51,14 @@ KalmanAction::KalmanAction(std::string && p_output_topic,
 
   // Initialize inputs.
   size_type idx_m = 0;
-  p_input_options.visit([&idx_m, &H, this](auto & input_id, auto & output_id) {
-    if(auto input = yy_data::find_iter(m_inputs, input_id);
+  p_options.visit([&idx_m, this](const auto & input_id, const auto & output_id) {
+    if(auto input{yy_data::find_iter(m_inputs, input_id)};
        !input.found)
     {
       if(auto output = yy_data::find_iter(m_outputs, output_id);
          output.found)
       {
-        m_inputs.emplace_back(std::string{input_id}, idx_m);
+        m_inputs.emplace(input.iter, input_id, idx_m);
         ++idx_m;
       }
     }
@@ -73,14 +72,17 @@ KalmanAction::KalmanAction(std::string && p_output_topic,
 
   matrix H{m, n};
 
-  for(const auto & input : m_inputs)
-  {
-    if(auto output = yy_data::find_iter(m_outputs, output_id);
-       output.found)
+  p_options.visit([&H, this](const auto & input_id, const auto & output_id) {
+    if(auto input = yy_data::find_iter(m_inputs, input_id);
+       !input.found)
     {
-      H(input.idx(), output->idx()) = 1.0;
+      if(auto output = yy_data::find_iter(m_outputs, output_id);
+         output.found)
+      {
+        H(input.iter->idx(), output.iter->idx()) = 1.0;
+      }
     }
-  }
+  });
 
   vector initial{n, 1.0};
 
@@ -90,7 +92,7 @@ KalmanAction::KalmanAction(std::string && p_output_topic,
   m_observations.resize(m);
 }
 
-void KalmanAction::run(const values::Store & store) noexcept
+void KalmanAction::Run(const values::Store & store) noexcept
 {
   m_ekf.predict();
 
