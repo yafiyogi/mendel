@@ -58,6 +58,8 @@ pkg_check_modules(ZLib IMPORTED_TARGET zlib REQUIRED)
 
 add_executable(mendel
   action_kalman.cpp
+  action_store.cpp
+  configure_actions.cpp
   configure_label_actions.cpp
   configure_logging.cpp
   configure_mqtt.cpp
@@ -87,8 +89,11 @@ target_compile_options(mendel
   "-DSPDLOG_FMT_EXTERNAL")
 
 target_include_directories(mendel
-  SYSTEM PRIVATE
-    "${CMAKE_INSTALL_PREFIX}/include"
+  PRIVATE
+    "${CMAKE_INSTALL_PREFIX}/include" )
+
+target_include_directories(mendel
+   SYSTEM PRIVATE
     "${YY_THIRD_PARTY_LIBRARY}/include")
 
 target_link_directories(mendel
