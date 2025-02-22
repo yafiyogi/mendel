@@ -41,8 +41,9 @@
 #include "yy_cpp/yy_locale.h"
 #include "yy_cpp/yy_yaml_util.h"
 
-#include "configure_mqtt.h"
+#include "configure_actions.hpp"
 #include "configure_logging.h"
+#include "configure_mqtt.h"
 #include "configure_values.h"
 #include "logger.h"
 #include "mqtt_client.h"
@@ -114,6 +115,7 @@ int main(int argc, char* argv[])
 
   mendel::set_logger(log_config.filename);
   spdlog::set_level(log_config.level);
+  spdlog::flush_on(spdlog::level::info);
 
   const auto yaml_values = yaml_config["values"sv];
   if(!yaml_values)
@@ -135,6 +137,11 @@ int main(int argc, char* argv[])
 
   auto mqtt_config{mendel::configure_mqtt(yaml_mqtt,
                                           values_config)};
+
+  spdlog::info("Configure actions.");
+  auto actions{mendel::configure_actions(yaml_config["actions"sv])};
+
+  spdlog::info("Mendel ready.");
 
   if(!no_run)
   {
