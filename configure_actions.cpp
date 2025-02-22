@@ -24,6 +24,9 @@
 
 */
 
+#include "spdlog/spdlog.h"
+#include "fmt/ranges.h"
+
 #include "yy_cpp/yy_make_lookup.h"
 #include "yy_cpp/yy_string_case.h"
 #include "yy_cpp/yy_string_util.h"
@@ -32,7 +35,8 @@
 
 #include "action.hpp"
 #include "action_kalman.hpp"
-#include "action_store.hpp"
+
+#include "configure_actions.hpp"
 
 namespace yafiyogi::mendel {
 
@@ -81,8 +85,11 @@ void configure_kalman(const YAML::Node & yaml_kalman,
       auto input{yy_util::yaml_get_value<std::string_view>(yaml_value.first)};
       auto output{yy_util::yaml_get_value<std::string_view>(yaml_value.second)};
 
-      options.emplace(std::string{input}, std::string{output});
-      inputs.emplace_back(std::string{input});
+      if(!input.empty() && !output.empty())
+      {
+        options.emplace(std::string{input}, std::string{output});
+        inputs.emplace_back(std::string{input});
+      }
     }
 
     if(!options.empty())
