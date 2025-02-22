@@ -32,6 +32,7 @@
 
 #include "yy_cpp/yy_vector.h"
 
+#include "value_type.h"
 #include "values_metric_id.h"
 #include "values_labels.h"
 
@@ -120,10 +121,21 @@ class MetricData final
       m_value = p_value;
     }
 
+    constexpr ValueType Type() const noexcept
+    {
+      return m_value_type;
+    }
+
+    constexpr void Type(ValueType p_value_type) noexcept
+    {
+      m_value_type = p_value_type;
+    }
+
   private:
     MetricId m_id;
     int64_t m_timestamp = 0;
     std::string m_value{};
+    ValueType m_value_type = ValueType::Unknown;
 };
 
 using MetricDataVector = yy_quad::simple_vector<MetricData>;

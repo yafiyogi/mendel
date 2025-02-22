@@ -71,6 +71,7 @@ void Metric::Event(std::string_view p_value,
                 p_value);
 
   m_metric_data.Value(p_value);
+  m_metric_data.Type(p_value_type);
   m_metric_data.Labels(p_labels);
   m_metric_data.Timestamp(p_timestamp);
 
