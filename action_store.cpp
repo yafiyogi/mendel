@@ -24,6 +24,8 @@
 
 */
 
+#include "spdlog/spdlog.h"
+
 #include "yy_cpp/yy_constants.hpp"
 #include "yy_cpp/yy_find_iter_util.hpp"
 
@@ -50,13 +52,14 @@ void StoreBuilder::Add(ActionPtr p_action,
   Action * l_action = iter->get();
   for(auto & input_id : p_inputs)
   {
-    auto [pointers, _] = m_store_builder.add(input_id, action_pointers{});
-
-
-    if(auto [action_pos, action_found] = yy_data::find_iter(*pointers, l_action);
-       !action_found)
+    if(auto [pointers, p_found] = m_store_builder.add(input_id, action_pointers{});
+       nullptr != pointers)
     {
-      pointers->emplace(action_pos, l_action);
+      if(auto [action_pos, action_found] = yy_data::find_iter(*pointers, l_action);
+         !action_found)
+      {
+        pointers->emplace(action_pos, l_action);
+      }
     }
   }
 }
