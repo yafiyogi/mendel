@@ -28,6 +28,8 @@
 
 #include <tuple>
 
+#include "yy_cpp/yy_type_traits.h"
+
 namespace yafiyogi::mendel::actions {
 
 class var_idx final
@@ -75,28 +77,31 @@ class var_idx final
       return m_idx;
     }
 
-    template<std::size_t Idx>
-    auto get() const
-    {
-      static_assert(Idx < 2, "var_idx index out of range");
-
-      if constexpr (Idx == 0)
-      {
-        return var();
-      }
-
-      if constexpr (Idx == 1)
-      {
-        return idx();
-      }
-    }
-
-    using types = std::tuple<std::string, size_type>;
-
   private:
     std::string m_var;
     size_type m_idx;
 };
+
+template<std::size_t Idx,
+         typename T,
+         std::enable_if_t<std::is_base_of_v<var_idx,
+                                            yy_traits::remove_cvr_t<T>>, bool> = true>
+inline constexpr auto get(T && p_var_idx) noexcept
+{
+  static_assert(Idx < 2, "var_idx index out of range");
+
+  if constexpr (Idx == 0)
+  {
+    return p_var_idx.var();
+  }
+
+  if constexpr (Idx == 1)
+  {
+    return p_var_idx.idx();
+  }
+}
+
+using var_idx_types = std::tuple<std::string, size_type>;
 
 } // namespace yafiyogi::mendel::actions
 
@@ -105,14 +110,14 @@ namespace std {
 // Specialize tuple_size<> for yafiyogi::mendel::actionsKalmanAction::var_idx.
 template<>
 struct tuple_size<yafiyogi::mendel::actions::var_idx>:
-      tuple_size<yafiyogi::mendel::actions::var_idx::types>
+      tuple_size<yafiyogi::mendel::actions::var_idx_types>
 {
 };
 
 // Specialize tuple_element<> for yafiyogi::mendel::actionsKalmanAction::var_idx.
 template<std::size_t Idx>
 struct tuple_element<Idx, yafiyogi::mendel::actions::var_idx>:
-      tuple_element<Idx, yafiyogi::mendel::actions::var_idx::types>
+      tuple_element<Idx, yafiyogi::mendel::actions::var_idx_types>
 {
 };
 
