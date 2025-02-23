@@ -111,7 +111,7 @@ void mqtt_client::on_message(const struct mosquitto_message * message)
 
     int64_t ts = std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now()).time_since_epoch().count();
 
-    for(const auto & handlers : payloads)
+    for(auto & handlers : payloads)
     {
       for(auto & handler : *handlers)
       {
