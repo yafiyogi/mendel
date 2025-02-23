@@ -28,6 +28,7 @@
 
 #include "yy_cpp/yy_find_iter_util.hpp"
 #include "action_kalman.hpp"
+#include "values_store.hpp"
 
 namespace yafiyogi::mendel::actions {
 
@@ -102,7 +103,7 @@ void KalmanAction::Run(const values::Store & store) noexcept
 
   for(const auto & [input, idx_m] : m_inputs)
   {
-    auto get_value = [idx_m, this](auto value) {
+    auto get_value = [idx_m, this](const auto & value) {
       m_observations(idx_m) = value;
     };
 
