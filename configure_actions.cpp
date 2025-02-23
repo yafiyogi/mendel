@@ -96,7 +96,7 @@ void configure_kalman(const YAML::Node & yaml_kalman,
     {
       auto output_topic{yy_util::yaml_get_value<std::string_view>(yaml_kalman["output_topic"sv])};
 
-      ActionPtr action{std::make_unique<actions::KalmanAction>(std::string{output_topic}, std::move(options))};
+      actions::ActionPtr action{std::make_unique<actions::KalmanAction>(std::string{output_topic}, std::move(options))};
 
       store.Add(std::move(action), inputs);
     }

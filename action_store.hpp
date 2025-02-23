@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include "yy_cpp/yy_observer_ptr.hpp"
+
 #include "action.hpp"
 #include "values_metric_id_trie.hpp"
 
@@ -34,7 +36,8 @@ namespace yafiyogi::mendel::actions {
 class Store
 {
   public:
-    using action_pointers = yy_quad::simple_vector<Action *>;
+    using action_obs_ptr = yy_data::observer_ptr<Action>;
+    using action_pointers = yy_quad::simple_vector<action_obs_ptr>;
     using store_builder_type = values::metric_id_trie<action_pointers>;
     using store_type = store_builder_type::automaton_type;
     using actions_type = yy_quad::simple_vector<ActionPtr>;
@@ -50,8 +53,8 @@ class Store
 
     template<typename Visitor>
     [[nodiscard]]
-    constexpr auto Find(Visitor && p_visitor,
-                        const values::MetricId & p_metric) const noexcept
+    constexpr bool Find(Visitor && p_visitor,
+                        const values::MetricId & p_metric) noexcept
     {
       return m_store.find(std::forward<Visitor>(p_visitor), p_metric);
     }
@@ -59,7 +62,7 @@ class Store
     template<typename Visitor>
     [[nodiscard]]
     constexpr bool Find(Visitor && p_visitor,
-                        const std::string & p_metric) const noexcept
+                        const std::string_view p_metric) noexcept
     {
       return m_store.find(std::forward<Visitor>(p_visitor), p_metric);
     }
