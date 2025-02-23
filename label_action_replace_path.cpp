@@ -54,7 +54,7 @@ void ReplacePathLabelAction::Apply(const Labels & /* labels */,
   if(auto payloads = m_topics.find(metric_labels.get_label(g_label_topic));
      !payloads.empty())
   {
-    for(const auto * replacements : payloads)
+    for(const auto & replacements : payloads)
     {
       for(const auto & format : *replacements)
       {

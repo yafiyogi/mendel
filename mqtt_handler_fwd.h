@@ -29,14 +29,16 @@
 #include <memory>
 #include <string>
 
-#include "yy_cpp/yy_vector.h"
 #include "yy_cpp/yy_flat_map.h"
+#include "yy_cpp/yy_observer_ptr.hpp"
+#include "yy_cpp/yy_vector.h"
 
 namespace yafiyogi::mendel {
 
 class MqttHandler;
 using MqttHandlerPtr = std::unique_ptr<MqttHandler>;
 using MqttHandlerStore = yy_data::flat_map<std::string, MqttHandlerPtr>;
-using MqttHandlerList = yy_quad::simple_vector<MqttHandler *>;
+using MqttHandlerObsPtr = yy_data::observer_ptr<MqttHandler>;
+using MqttHandlerList = yy_quad::simple_vector<MqttHandlerObsPtr>;
 
 } //namespace yafiyogi::mendel

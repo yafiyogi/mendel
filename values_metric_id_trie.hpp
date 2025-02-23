@@ -52,6 +52,7 @@ class Query final
     using label_const_l_value_ref = typename traits::label_l_value_ref;
     using label_span_type = typename tokenizer_type::label_span_type;
 
+    using node_type = typename traits::ptr_node_type;
     using node_ptr = typename traits::ptr_node_ptr;
     using const_node_ptr = typename traits::ptr_const_node_ptr;
     using trie_vector = typename traits::ptr_trie_vector;
@@ -74,13 +75,12 @@ class Query final
 
     template<typename Visitor>
     [[nodiscard]]
-    constexpr bool find(Visitor && p_visitor,
-                        const MetricId & p_metric_id) const noexcept
+    constexpr bool find(Visitor && p_visitor, const MetricId & p_metric_id) noexcept
     {
-      auto node = find_string(m_nodes.data(),
-                            yy_quad::make_const_span(p_metric_id.Id()));
+      node_ptr node{find_string(node_ptr{m_nodes.data()},
+                                yy_quad::make_const_span(p_metric_id.Id()))};
 
-      if(nullptr != node)
+      if(node)
       {
         const auto & labels = p_metric_id.Labels();
 
@@ -93,11 +93,10 @@ class Query final
 
     template<typename Visitor>
     [[nodiscard]]
-    constexpr bool find(Visitor && p_visitor,
-                        const std::string_view p_location) const noexcept
+    constexpr bool find(Visitor && p_visitor, std::string_view p_location) const noexcept
     {
-      auto node = find_string(m_nodes.data(),
-                              yy_quad::make_const_span(p_location));
+      const_node_ptr node{find_string(const_node_ptr{m_nodes.data()},
+                                yy_quad::make_const_span(p_location))};
 
       return visit(std::forward<Visitor>(p_visitor), node);
     }
@@ -110,20 +109,34 @@ class Query final
 
   private:
     template<typename Visitor>
-    constexpr bool visit(Visitor && visitor,
-                         const_node_ptr node) const
+    [[nodiscard]]
+    static constexpr bool visit(Visitor && visitor, node_ptr node)
     {
-      auto payload = (nullptr != node) && !node->empty();
+      bool payload = node && !node->empty();
       if(payload)
       {
-        visitor(*node->data());
+        visitor(*(node->data()));
       }
 
       return payload;
     }
 
-    static constexpr const_node_ptr find_string(const_node_ptr node,
-                                                token_type token)
+    template<typename Visitor>
+    [[nodiscard]]
+    static constexpr bool visit(Visitor && visitor, const_node_ptr node)
+    {
+      bool payload = node && !node->empty();
+      if(payload)
+      {
+        visitor(*(node->data()));
+      }
+
+      return payload;
+    }
+
+    [[nodiscard]]
+    static constexpr node_ptr find_string(node_ptr node,
+                                          token_type token) noexcept
     {
       auto next_node_do = [&node](const node_ptr * edge_node, size_type)
       {
@@ -137,7 +150,30 @@ class Query final
         if(token_type label_part{tokenizer.scan()};
            !node->find_edge(next_node_do, label_part))
         {
-          return nullptr;
+          return node_ptr{};
+        }
+      }
+
+      return node;
+    }
+
+    [[nodiscard]]
+    static constexpr const_node_ptr find_string(const_node_ptr node,
+                                                token_type token) noexcept
+    {
+      auto next_node_do = [&node](const node_ptr * edge_node, size_type)
+      {
+        node = edge_node->get();
+      };
+
+      tokenizer_type tokenizer{token};
+
+      while(!tokenizer.empty())
+      {
+        if(token_type label_part{tokenizer.scan()};
+           !node->find_edge(next_node_do, label_part))
+        {
+          return const_node_ptr{};
         }
       }
 

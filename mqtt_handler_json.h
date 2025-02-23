@@ -133,8 +133,8 @@ class JsonVisitor
     static const values::Labels g_empty_labels;
     static const yy_mqtt::TopicLevelsView g_empty_levels;
 
-    const values::Labels * m_labels = &g_empty_labels;
-    const yy_mqtt::TopicLevelsView * m_levels = &g_empty_levels;
+    yy_data::observer_ptr<std::add_const_t<values::Labels>> m_labels{&g_empty_labels};
+    yy_data::observer_ptr<std::add_const_t<yy_mqtt::TopicLevelsView>> m_levels{&g_empty_levels};
     int64_t m_timestamp = 0;
     MetricDataVector m_metric_data{};
 };
