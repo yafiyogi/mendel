@@ -34,7 +34,9 @@ class Store;
 
 } // namespace yafiyogi::values
 
-namespace yafiyogi::mendel {
+namespace yafiyogi::mendel::actions {
+
+class Store;
 
 class Action
 {
@@ -52,4 +54,4 @@ class Action
 
 using ActionPtr = std::unique_ptr<Action>;
 
-} // namespace yafifogi::mendel
+} // namespace yafifogi::mendel::actions
