@@ -81,7 +81,7 @@ MqttHandlerPtr configure_json_handler(std::string_view p_id,
     std::string_view property{};
 
     auto do_add_property = [&property, &json_pointer, &json_pointer_builder, &metrics_count]
-                           (values::Metrics * visitor_values_metrics, auto /* pos */) {
+                           (auto visitor_values_metrics, auto /* pos */) {
       if(nullptr != visitor_values_metrics)
       {
         auto [builder_metrics, added] = json_pointer_builder.add_pointer(json_pointer,
@@ -167,7 +167,7 @@ MqttHandlerPtr configure_value_handler(std::string_view p_id,
 {
   values::Metrics handler_metrics{} ;
   auto do_add_property = [&handler_metrics]
-                         (values::Metrics * visitor_values_metrics, auto /* pos */) {
+                         (auto visitor_values_metrics, auto /* pos */) {
     if(nullptr != visitor_values_metrics)
     {
       handler_metrics.reserve(visitor_values_metrics->size());

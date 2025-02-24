@@ -42,11 +42,11 @@ void CopyLabelAction::Apply(const Labels & labels,
                             const yy_mqtt::TopicLevelsView & /* p_levels */,
                             Labels & metric_labels) noexcept
 {
-  auto do_copy_label = [this, &metric_labels](const std::string * label_value, auto) {
+  auto do_copy_label = [this, &metric_labels](auto label_value, auto) {
     metric_labels.set_label(m_label_target, *label_value);
   };
 
-  std::ignore = labels.get_label(m_label_source, do_copy_label);
+  std::ignore = labels.get_label(do_copy_label, m_label_source);
 }
 
 

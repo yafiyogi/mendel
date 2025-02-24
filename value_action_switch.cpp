@@ -35,7 +35,7 @@ namespace yafiyogi::values {
 void SwitchValueAction::Apply(MetricData & p_metric_data,
                               ValueType /* p_value_type */) noexcept
 {
-  auto do_switch = [&p_metric_data](const std::string * value, auto) {
+  auto do_switch = [&p_metric_data](Switch::value_ptr value, auto) {
     p_metric_data.Value(*value);
   };
 

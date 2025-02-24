@@ -41,11 +41,11 @@ void KeepLabelAction::Apply(const Labels & labels,
                             const yy_mqtt::TopicLevelsView & /* p_levels */,
                             Labels & metric_labels) noexcept
 {
-  auto do_keep_label = [this, &metric_labels](const std::string * label_value, auto) {
+  auto do_keep_label = [this, &metric_labels](auto label_value, auto) {
     metric_labels.set_label(m_label, *label_value);
   };
 
-  std::ignore = labels.get_label(m_label, do_keep_label);
+  std::ignore = labels.get_label(do_keep_label, m_label);
 }
 
 

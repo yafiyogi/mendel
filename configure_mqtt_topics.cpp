@@ -58,7 +58,7 @@ mqtt_topics configure_mqtt_topics(const YAML::Node & yaml_topics,
        yaml_handlers)
     {
       MqttHandlerList mqtt_handlers;
-      auto do_add_handler = [&mqtt_handlers](auto * mqtt_handler, auto /* pos */) {
+      auto do_add_handler = [&mqtt_handlers](auto mqtt_handler, auto /* pos */) {
         mqtt_handlers.emplace_back(mqtt_handler->get());
       };
 

@@ -75,7 +75,9 @@ class Query final
 
     template<typename Visitor>
     [[nodiscard]]
-    constexpr bool find(Visitor && p_visitor, const MetricId & p_metric_id) noexcept
+    constexpr bool find(Visitor && p_visitor,
+                        const MetricId & p_metric_id,
+                        const std::string_view label) noexcept
     {
       node_ptr node{find_string(node_ptr{m_nodes.data()},
                                 yy_quad::make_const_span(p_metric_id.Id()))};
@@ -85,7 +87,7 @@ class Query final
         const auto & labels = p_metric_id.Labels();
 
         node = find_string(node,
-                           yy_quad::make_const_span(labels.get_label(labels.sort_order())));
+                           yy_quad::make_const_span(labels.get_label(label)));
       }
 
       return visit(std::forward<Visitor>(p_visitor), node);
@@ -96,7 +98,7 @@ class Query final
     constexpr bool find(Visitor && p_visitor, std::string_view p_location) const noexcept
     {
       const_node_ptr node{find_string(const_node_ptr{m_nodes.data()},
-                                yy_quad::make_const_span(p_location))};
+                                      yy_quad::make_const_span(p_location))};
 
       return visit(std::forward<Visitor>(p_visitor), node);
     }
@@ -138,7 +140,7 @@ class Query final
     static constexpr node_ptr find_string(node_ptr node,
                                           token_type token) noexcept
     {
-      auto next_node_do = [&node](const node_ptr * edge_node, size_type)
+      auto next_node_do = [&node](auto edge_node, size_type)
       {
         node = *edge_node;
       };
@@ -161,7 +163,7 @@ class Query final
     static constexpr const_node_ptr find_string(const_node_ptr node,
                                                 token_type token) noexcept
     {
-      auto next_node_do = [&node](const node_ptr * edge_node, size_type)
+      auto next_node_do = [&node](auto edge_node, size_type)
       {
         node = edge_node->get();
       };
@@ -192,7 +194,7 @@ using tokenizer_type = yy_trie::label_word_tokenizer<LabelType,
 
 template<typename ValueType>
 using metric_id_trie = yy_data::fm_flat_trie_ptr<std::string,
-                                                   ValueType,
-                                                   metric_id_trie_detail::Query,
-                                                   metric_id_trie_detail::tokenizer_type>;
+                                                 ValueType,
+                                                 metric_id_trie_detail::Query,
+                                                 metric_id_trie_detail::tokenizer_type>;
 } // namespace yafiyogi::values
