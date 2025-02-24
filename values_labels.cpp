@@ -34,16 +34,6 @@ namespace yafiyogi::values {
 
 const std::string g_empty_str{};
 
-Labels::Labels(const std::string & p_sort_order) noexcept:
-  m_sort_order(p_sort_order)
-{
-}
-
-Labels::Labels(std::string && p_sort_order) noexcept:
-  m_sort_order(std::move(p_sort_order))
-{
-}
-
 void Labels::clear() noexcept
 {
   m_labels.clear();
@@ -54,16 +44,6 @@ void Labels::set_label(std::string_view p_label,
 {
   m_labels.emplace_or_assign(std::string{p_label},
                              std::string{p_value});
-}
-
-void Labels::set_sort_order(const std::string & p_sort_order) noexcept
-{
-  m_sort_order = p_sort_order;
-}
-
-void Labels::set_sort_order(std::string && p_sort_order) noexcept
-{
-  m_sort_order = std::move(p_sort_order);
 }
 
 const std::string & Labels::get_label(const std::string_view p_label) const noexcept
@@ -89,22 +69,12 @@ void Labels::erase(const std::string_view p_label)
 
 bool Labels::operator<(const Labels & other) const noexcept
 {
-  if(m_sort_order.empty())
-  {
-    return m_labels < other.m_labels;
-  }
-
-  return get_label(m_sort_order).compare(other.get_label(m_sort_order)) < 0;
+  return m_labels < other.m_labels;
 }
 
 bool Labels::operator==(const Labels & other) const noexcept
 {
-  if(m_sort_order.empty())
-  {
-    return m_labels == other.m_labels;
-  }
-
-  return get_label(m_sort_order).compare(other.get_label(m_sort_order)) == 0;
+  return m_labels == other.m_labels;
 }
 
 } // namespace yafiyogi::values

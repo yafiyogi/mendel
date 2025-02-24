@@ -46,9 +46,6 @@ class Labels final
                                          yy_data::ClearAction::Keep,
                                          yy_data::ClearAction::Keep>;
 
-    Labels(const std::string & p_sort_order) noexcept;
-    Labels(std::string && p_sort_order) noexcept;
-
     constexpr Labels() noexcept = default;
     constexpr Labels(const Labels &) noexcept = default;
     constexpr Labels(Labels &&) noexcept = default;
@@ -65,18 +62,10 @@ class Labels final
 
     template<typename Visitor>
     [[nodiscard]]
-    bool get_label(const std::string_view p_label,
-               Visitor && visitor) const noexcept
+    bool get_label(Visitor && visitor,
+                   const std::string_view p_label) const noexcept
     {
       return m_labels.find_value(std::forward<Visitor>(visitor), p_label).found;
-    }
-
-    void set_sort_order(const std::string & p_sort_order) noexcept;
-    void set_sort_order(std::string && p_sort_order) noexcept;
-
-    const std::string & sort_order() const noexcept
-    {
-      return m_sort_order;
     }
 
     void erase(const std::string_view p_label);
@@ -98,7 +87,6 @@ class Labels final
 
   private:
     LabelStore m_labels{};
-    std::string m_sort_order;
 };
 
 } // namespace yafiyogi::values
