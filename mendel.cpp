@@ -41,6 +41,8 @@
 #include "yy_cpp/yy_locale.h"
 #include "yy_cpp/yy_yaml_util.h"
 
+#include "actions_handler.hpp"
+#include "cache_handler.hpp"
 #include "configure_actions.hpp"
 #include "configure_logging.h"
 #include "configure_mqtt.h"
@@ -138,16 +140,41 @@ int main(int argc, char* argv[])
   auto mqtt_config{mendel::configure_mqtt(yaml_mqtt,
                                           values_config)};
 
-  spdlog::info("Configure actions.");
-  auto actions{mendel::configure_actions(yaml_config["actions"sv])};
+  spdlog::info("Configure actions:");
+  mendel::actions::StorePtr actions_store{};
+  values::StorePtr values_store{};
+  {
+    mendel::actions::StoreBuilder actions_builder{};
+    values::StoreBuilder values_builder{};
+
+    mendel::configure_actions(yaml_config["actions"sv],
+                              actions_builder,
+                              values_builder);
+
+    actions_store = actions_builder.Create();
+    values_store = values_builder.Create();
+  }
 
   spdlog::info("Mendel ready.");
 
   if(!no_run)
   {
+
+    auto actions_handler{std::make_shared<mendel::ActionsHandler>(values_store)};
+    std::jthread actions_thread{[&actions_handler](std::stop_token p_stop_token) {
+      actions_handler->Run(p_stop_token);
+    }};
+
+    auto cache_handler{std::make_shared<mendel::CacheHandler>(actions_handler,
+                                                              std::move(actions_store),
+                                                              values_store)};
+    std::jthread cache_thread{[&cache_handler](std::stop_token p_stop_token) {
+      cache_handler->Run(p_stop_token);
+    }};
+
     mosqpp::lib_init();
 
-    auto client = std::make_unique<mendel::mqtt_client>(mqtt_config);
+    auto client = std::make_unique<mendel::mqtt_client>(mqtt_config, cache_handler);
 
     client->connect();
     try
@@ -178,6 +205,15 @@ int main(int argc, char* argv[])
     {
       sleep(1);
     }
+    client.reset();
+
+    cache_thread.request_stop();
+    cache_thread.join();
+    cache_handler.reset();
+
+    actions_thread.request_stop();
+    actions_thread.join();
+    actions_handler.reset();
 
     mosqpp::lib_cleanup();
   }
