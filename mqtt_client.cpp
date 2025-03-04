@@ -34,6 +34,7 @@
 #include "yy_mqtt/yy_mqtt_util.h"
 
 #include "configure_mqtt.h"
+#include "values_labels.h"
 #include "mqtt_handler.h"
 
 #include "mqtt_client.h"
@@ -42,13 +43,18 @@ namespace yafiyogi::mendel {
 
 using namespace std::string_view_literals;
 
-mqtt_client::mqtt_client(mqtt_config & p_config):
+mqtt_client::mqtt_client(mqtt_config & p_config,
+                         CacheHandlerPtr p_cache_handler):
   mosqpp::mosquittopp(),
   m_topics(std::move(p_config.topics)),
+  m_subscriptions(std::move(p_config.subscriptions)),
   m_id(std::move(p_config.id)),
   m_host(std::move(p_config.host)),
-  m_port(p_config.port)
+  m_port(p_config.port),
+  m_cache_handler_ptr(std::move(p_cache_handler)),
+  m_cache_handler()
 {
+  m_cache_handler = m_cache_handler_ptr.get();
   int mqtt_version = MQTT_PROTOCOL_V5;
   mosqpp::mosquittopp::opts_set(MOSQ_OPT_PROTOCOL_VERSION, &mqtt_version);
 
@@ -111,17 +117,20 @@ void mqtt_client::on_message(const struct mosquitto_message * message)
 
     int64_t ts = std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now()).time_since_epoch().count();
 
+    m_labels.set_label(values::g_label_topic, topic);
+
+    m_metric_data.clear(yy_data::ClearAction::Keep);
+
+    values::MetricDataVectorPtr metric_data{&m_metric_data};
     for(auto & handlers : payloads)
     {
       for(auto & handler : *handlers)
       {
-        if(auto & metric_data = handler->Event(data, m_labels, m_path, ts);
-           !metric_data.empty())
-        {
-          m_queue.swap_in(metric_data);
-        }
+        handler->Event(data, m_labels, m_path, ts, metric_data);
       }
     }
+
+    m_cache_handler->Write(m_metric_data);
   }
 }
 

@@ -35,25 +35,26 @@
 
 #include "mosquittopp.h"
 
-#include "yy_cpp/yy_ring_buffer.h"
 #include "yy_mqtt/yy_mqtt_constants.h"
 
+#include "cache_handler.hpp"
 #include "values_labels.h"
 
 #include "mqtt_topics.h"
 
 namespace yafiyogi::mendel {
 
-class mqtt_config;
+class CacheHandler;
+using CacheHandlerPtr = std::shared_ptr<CacheHandler>;
 
-template<std::size_t Capacity>
-using RingBuffer = yy_data::ring_buffer<values::MetricDataVector, Capacity>;
+class mqtt_config;
 
 class mqtt_client final:
       public mosqpp::mosquittopp
 {
   public:
-    explicit mqtt_client(mqtt_config & config);
+    explicit mqtt_client(mqtt_config & config,
+                         CacheHandlerPtr p_cache_handler);
 
     mqtt_client() = delete;
     mqtt_client(const mqtt_client &) = delete;
@@ -88,7 +89,9 @@ class mqtt_client final:
     std::atomic<bool> m_is_connected = false;
     values::Labels m_labels{};
     yy_mqtt::TopicLevelsView m_path{};
-    RingBuffer<ringbuffer_capacity> m_queue;
+    CacheHandlerPtr m_cache_handler_ptr{};
+    yy_data::observer_ptr<CacheHandler> m_cache_handler{};
+    values::MetricDataVector m_metric_data{};
 };
 
 } // namespace yafiyogi::mendel
