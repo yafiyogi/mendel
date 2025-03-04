@@ -28,11 +28,22 @@
 
 #include "yy_tp_util/yaml_fwd.h"
 
-#include "action_store.hpp"
+namespace yafiyogi::values {
+
+class StoreBuilder;
+
+} // namespace yafiyogi::values
+
+namespace yafiyogi::mendel::actions {
+
+class StoreBuilder;
+
+} // namespace yafiyogi::mendel::actions
 
 namespace yafiyogi::mendel {
 
-[[nodiscard]]
-actions::Store configure_actions(const YAML::Node & yaml_actions);
+void configure_actions(const YAML::Node & yaml_actions,
+                       actions::StoreBuilder & actions_store,
+                       values::StoreBuilder & values_store);
 
 } // namespace yafiyogi::mendel

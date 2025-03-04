@@ -35,6 +35,8 @@
 
 #include "action.hpp"
 #include "action_kalman.hpp"
+#include "actions_store.hpp"
+#include "values_store.hpp"
 
 #include "configure_actions.hpp"
 
@@ -69,7 +71,8 @@ ActionType decode_action_type(const YAML::Node & yaml_type)
 }
 
 void configure_kalman(const YAML::Node & yaml_kalman,
-                      actions::StoreBuilder & store)
+                      actions::StoreBuilder & actions_builder,
+                      values::StoreBuilder & values_builder)
 {
   if(yaml_kalman)
   {
@@ -94,18 +97,29 @@ void configure_kalman(const YAML::Node & yaml_kalman,
 
     if(!options.empty())
     {
+      spdlog::info("  Configuring Kalman Filter [{}]."sv,
+                   yy_util::yaml_get_value<std::string_view>(yaml_kalman["action_id"sv]));
+
       auto output_topic{yy_util::yaml_get_value<std::string_view>(yaml_kalman["output_topic"sv])};
 
-      actions::ActionPtr action{std::make_unique<actions::KalmanAction>(std::string{output_topic}, std::move(options))};
+      actions::ActionPtr action{std::make_unique<actions::KalmanAction>(std::string{output_topic},
+                                                                        std::move(options))};
 
-      store.Add(std::move(action), inputs);
+      for(auto & input : inputs)
+      {
+        values_builder.Add(input);
+      }
+
+      actions_builder.Add(std::move(action), inputs);
     }
   }
 }
 
 } // anonymous namespace
 
-actions::Store configure_actions(const YAML::Node & yaml_actions)
+void configure_actions(const YAML::Node & yaml_actions,
+                                 actions::StoreBuilder & actions_store,
+                                 values::StoreBuilder & values_store)
 {
   actions::StoreBuilder actions{};
 
@@ -116,7 +130,7 @@ actions::Store configure_actions(const YAML::Node & yaml_actions)
       switch(decode_action_type(yaml_action["type"sv]))
       {
         case ActionType::Kalman:
-          configure_kalman(yaml_action, actions);
+          configure_kalman(yaml_action, actions_store, values_store);
           break;
 
         case ActionType::None:
@@ -126,8 +140,6 @@ actions::Store configure_actions(const YAML::Node & yaml_actions)
       }
     }
   }
-
-  return actions::Store{};
 }
 
 } // namespace yafiyogi::mendel
