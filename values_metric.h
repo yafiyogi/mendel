@@ -66,9 +66,9 @@ class Metric final
     void Event(std::string_view p_value,
                const Labels & p_labels,
                const yy_mqtt::TopicLevelsView & p_levels,
-               MetricDataVector & p_metric_data,
                const int64_t p_timestamp,
-               ValueType p_value_type);
+               ValueType p_value_type,
+               MetricDataVectorPtr p_metric_data);
 
   private:
     MetricData m_metric_data{};

@@ -45,21 +45,23 @@ MqttValueHandler::MqttValueHandler(std::string_view p_handler_id,
   m_metric_data.reserve(m_metrics.size());
 }
 
-values::MetricDataVector & MqttValueHandler::Event(std::string_view p_value,
-                                                   const values::Labels & p_labels,
-                                                   const yy_mqtt::TopicLevelsView & p_levels,
-                                                   const int64_t p_timestamp) noexcept
+void MqttValueHandler::Event(std::string_view p_mqtt_data,
+                             const values::Labels & p_labels,
+                             const yy_mqtt::TopicLevelsView & p_levels,
+                             const int64_t p_timestamp,
+               values::MetricDataVectorPtr p_metric_data) noexcept
 {
   spdlog::debug("  handler [{}]"sv, Id());
 
-  m_metric_data.clear(yy_data::ClearAction::Keep);
-
   for(auto & metric : m_metrics)
   {
-    metric->Event(p_value, p_labels, p_levels, m_metric_data, p_timestamp, values::ValueType::Unknown);
+    metric->Event(p_mqtt_data,
+                  p_labels,
+                  p_levels,
+                  p_timestamp,
+                  values::ValueType::Unknown,
+                  p_metric_data);
   }
-
-  return m_metric_data;
 }
 
 } // namespace yafiyogi::mendel

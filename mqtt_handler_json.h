@@ -48,8 +48,6 @@ class JsonVisitor
     using MetricDataVector = values::MetricDataVector;
     using Metrics = values::Metrics;
 
-    JsonVisitor(size_type p_metric_count) noexcept;
-
     constexpr JsonVisitor() noexcept = default;
     constexpr JsonVisitor(const JsonVisitor &) noexcept = default;
     constexpr JsonVisitor(JsonVisitor && p_other) noexcept:
@@ -80,6 +78,8 @@ class JsonVisitor
     void labels(const values::Labels * p_labels) noexcept;
     void levels(const yy_mqtt::TopicLevelsView * p_levels) noexcept;
     void timestamp(const int64_t p_timestamp) noexcept;
+    void metric_data(values::MetricDataVectorPtr p_metric_data) noexcept;
+
     void apply_str(Metrics & metrics,
                    std::string_view str)
     {
@@ -117,11 +117,9 @@ class JsonVisitor
     {
       m_labels = &g_empty_labels;
       m_levels = &g_empty_levels;
-      m_metric_data.clear(yy_data::ClearAction::Keep);
       m_timestamp = 0;
+      m_metric_data.release();
     }
-
-    MetricDataVector & metric_data() noexcept;
 
   private:
     void apply(Metrics & p_metrics,
@@ -136,7 +134,7 @@ class JsonVisitor
     yy_data::observer_ptr<std::add_const_t<values::Labels>> m_labels{&g_empty_labels};
     yy_data::observer_ptr<std::add_const_t<yy_mqtt::TopicLevelsView>> m_levels{&g_empty_levels};
     int64_t m_timestamp = 0;
-    MetricDataVector m_metric_data{};
+    values::MetricDataVectorPtr m_metric_data{};
 };
 
 } // namespace json_handler_detail
@@ -164,13 +162,15 @@ class MqttJsonHandler final:
     MqttJsonHandler & operator=(const MqttJsonHandler &) = delete;
     constexpr MqttJsonHandler & operator=(MqttJsonHandler &&) noexcept = default;
 
-    MetricDataVector & Event(std::string_view p_value,
-                             const values::Labels & p_labels,
-                             const yy_mqtt::TopicLevelsView & p_levels,
-                             const int64_t p_timestamp) noexcept override;
+    void Event(std::string_view p_mqtt_data,
+               const values::Labels & p_labels,
+               const yy_mqtt::TopicLevelsView & p_levels,
+               const int64_t p_timestamp,
+               values::MetricDataVectorPtr p_metric_data) noexcept override;
 
   private:
     parser_type m_parser;
+    size_type m_metrics_count = 0;
 };
 
 } // namespace yafiyogi::mendel

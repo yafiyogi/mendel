@@ -47,11 +47,6 @@ namespace json_handler_detail {
 const values::Labels JsonVisitor::g_empty_labels{};
 const yy_mqtt::TopicLevelsView JsonVisitor::g_empty_levels{};
 
-JsonVisitor::JsonVisitor(size_type p_metric_count) noexcept
-{
-  m_metric_data.reserve(p_metric_count);
-}
-
 void JsonVisitor::labels(const values::Labels * p_labels) noexcept
 {
   if(nullptr == p_labels)
@@ -75,19 +70,24 @@ void JsonVisitor::timestamp(const int64_t p_timestamp) noexcept
   m_timestamp = p_timestamp;
 }
 
+void JsonVisitor::metric_data(values::MetricDataVectorPtr p_metric_data) noexcept
+{
+  m_metric_data = p_metric_data;
+}
+
 void JsonVisitor::apply(Metrics & p_metrics,
                         std::string_view p_value,
                         values::ValueType p_value_type)
 {
   for(auto & metric : p_metrics)
   {
-    metric->Event(p_value, *m_labels, *m_levels, m_metric_data, m_timestamp, p_value_type);
+    metric->Event(p_value,
+                  *m_labels,
+                  *m_levels,
+                  m_timestamp,
+                  p_value_type,
+                  m_metric_data);
   }
-}
-
-values::MetricDataVector & JsonVisitor::metric_data() noexcept
-{
-  return m_metric_data;
 }
 
 }
@@ -95,18 +95,22 @@ values::MetricDataVector & JsonVisitor::metric_data() noexcept
 MqttJsonHandler::MqttJsonHandler(std::string_view p_handler_id,
                                  const parser_options_type & p_json_options,
                                  handler_config_type && p_json_handler_config,
-                                 size_type p_metric_count) noexcept:
+                                 size_type p_metrics_count) noexcept:
   MqttHandler(p_handler_id, type::Json),
-  m_parser(p_json_options, std::move(p_json_handler_config), p_metric_count)
+  m_parser(p_json_options, std::move(p_json_handler_config)),
+  m_metrics_count(p_metrics_count)
 {
 }
 
-values::MetricDataVector & MqttJsonHandler::Event(std::string_view p_value,
-                                                  const values::Labels & p_labels,
-                                                  const yy_mqtt::TopicLevelsView & p_levels,
-                                                  const int64_t p_timestamp) noexcept
+void MqttJsonHandler::Event(std::string_view p_mqtt_data,
+                            const values::Labels & p_labels ,
+                            const yy_mqtt::TopicLevelsView & p_levels,
+                            const int64_t p_timestamp,
+                            values::MetricDataVectorPtr p_metric_data) noexcept
 {
   spdlog::debug("  handler [{}]"sv, Id());
+
+  p_metric_data->reserve(p_metric_data->size() + m_metrics_count);
 
   m_parser.reset();
   auto & handler = m_parser.handler();
@@ -117,10 +121,12 @@ values::MetricDataVector & MqttJsonHandler::Event(std::string_view p_value,
   visitor.labels(&p_labels);
   visitor.levels(&p_levels);
   visitor.timestamp(p_timestamp);
+  visitor.metric_data(p_metric_data);
 
-  m_parser.write_some(false, p_value.data(), p_value.size(), boost::json::error_code{});
-
-  return visitor.metric_data();
+  m_parser.write_some(false,
+                      p_mqtt_data.data(),
+                      p_mqtt_data.size(),
+                      boost::json::error_code{});
 }
 
 } // namespace yafiyogi::mendel

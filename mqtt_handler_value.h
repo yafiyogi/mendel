@@ -50,10 +50,11 @@ class MqttValueHandler:
     MqttValueHandler & operator=(const MqttValueHandler &) = delete;
     constexpr MqttValueHandler & operator=(MqttValueHandler &&) noexcept = default;
 
-    MetricDataVector & Event(std::string_view p_value,
-                             const values::Labels & p_labels,
-                             const yy_mqtt::TopicLevelsView & p_levels,
-                             const int64_t p_timestamp) noexcept override;
+    void Event(std::string_view p_mqtt_data,
+               const values::Labels & p_labels,
+               const yy_mqtt::TopicLevelsView & p_levels,
+               const int64_t p_timestamp,
+               values::MetricDataVectorPtr p_metric_data) noexcept override;
   private:
     values::Metrics m_metrics{};
     MetricDataVector m_metric_data{};

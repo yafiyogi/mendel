@@ -61,9 +61,9 @@ const std::string & Metric::Property() const noexcept
 void Metric::Event(std::string_view p_value,
                    const Labels & p_labels,
                    const yy_mqtt::TopicLevelsView & p_levels,
-                   MetricDataVector & p_metric_data,
                    const int64_t p_timestamp,
-                   ValueType p_value_type)
+                   ValueType p_value_type,
+                   values::MetricDataVectorPtr p_metric_data)
 {
   spdlog::debug("    [{}] property=[{}] [{}]"sv,
                 Id().Id(),
@@ -75,9 +75,10 @@ void Metric::Event(std::string_view p_value,
   m_metric_data.Labels(p_labels);
   m_metric_data.Timestamp(p_timestamp);
 
-  for(const auto & action : m_label_actions)
+  for(auto & l_labels = m_metric_data.Labels();
+      const auto & action : m_label_actions)
   {
-    action->Apply(p_labels, p_levels, m_metric_data.Labels());
+    action->Apply(l_labels, p_levels, m_metric_data.Labels());
   }
 
   for(const auto & action : m_value_actions)
@@ -93,7 +94,7 @@ void Metric::Event(std::string_view p_value,
     });
   }
 
-  p_metric_data.emplace_back(m_metric_data);
+  p_metric_data->emplace_back(m_metric_data);
 }
 
 } // namespace yafiyogi::values

@@ -82,10 +82,11 @@ class MqttHandler
       return m_type;
     }
 
-    virtual values::MetricDataVector & Event(std::string_view p_data,
-                                             const values::Labels & /* p_labels */,
-                                             const yy_mqtt::TopicLevelsView & /* p_levels */,
-                                             const int64_t /* p_timestamp */) noexcept = 0;
+    virtual void Event(std::string_view p_mqtt_data,
+                       const values::Labels & p_labels ,
+                       const yy_mqtt::TopicLevelsView & p_levels ,
+                       const int64_t p_timestamp,
+                       values::MetricDataVectorPtr p_metric_data) noexcept = 0;
   private:
     std::string m_handler_id{};
     type m_type = type::Text;
