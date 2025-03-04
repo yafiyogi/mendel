@@ -57,8 +57,10 @@ pkg_check_modules(Mosquitto_cpp IMPORTED_TARGET libmosquittopp_static REQUIRED)
 pkg_check_modules(ZLib IMPORTED_TARGET zlib REQUIRED)
 
 add_executable(mendel
+  actions_handler.cpp
   action_kalman.cpp
-  action_store.cpp
+  actions_store.cpp
+  cache_handler.cpp
   configure_actions.cpp
   configure_label_actions.cpp
   configure_logging.cpp
@@ -80,6 +82,7 @@ add_executable(mendel
   value_action_keep.cpp
   value_action_switch.cpp
   values_labels.cpp
+  values_store.cpp
   values_metric_data.cpp
   mendel.cpp )
 
