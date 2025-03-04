@@ -58,6 +58,8 @@ class Query final
     using trie_vector = typename traits::ptr_trie_vector;
     using data_vector = typename traits::data_vector;
 
+    using value_type = typename traits::value_type;
+
     constexpr explicit Query(trie_vector && p_nodes,
                              data_vector && p_data) noexcept:
       m_nodes(std::move(p_nodes)),
@@ -114,32 +116,37 @@ class Query final
     [[nodiscard]]
     static constexpr bool visit(Visitor && visitor, node_ptr node)
     {
-      bool payload = node && !node->empty();
-      if(payload)
+      bool has_payload = node && !node->empty();
+      if(has_payload)
       {
-        visitor(*(node->data()));
+        visitor(node->data());
       }
 
-      return payload;
+      return has_payload;
     }
 
     template<typename Visitor>
     [[nodiscard]]
     static constexpr bool visit(Visitor && visitor, const_node_ptr node)
     {
-      bool payload = node && !node->empty();
-      if(payload)
+      bool has_payload = node && !node->empty();
+      if(has_payload)
       {
-        visitor(*(node->data()));
+        visitor(node->data());
       }
 
-      return payload;
+      return has_payload;
     }
 
     [[nodiscard]]
     static constexpr node_ptr find_string(node_ptr node,
                                           token_type token) noexcept
     {
+      if(!node)
+      {
+        return node_ptr{};
+      }
+
       auto next_node_do = [&node](auto edge_node, size_type)
       {
         node = *edge_node;
@@ -163,6 +170,11 @@ class Query final
     static constexpr const_node_ptr find_string(const_node_ptr node,
                                                 token_type token) noexcept
     {
+      if(!node)
+      {
+        return const_node_ptr{};
+      }
+
       auto next_node_do = [&node](auto edge_node, size_type)
       {
         node = edge_node->get();
