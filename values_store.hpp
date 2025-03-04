@@ -26,37 +26,44 @@
 
 #pragma once
 
+#include <memory>
 #include <mutex>
 #include <string_view>
 
+#include "yy_cpp/yy_atomic_wrapper.hpp"
 #include "yy_cpp/yy_flat_map.h"
 
 #include "values_metric_id_trie.hpp"
 
 namespace yafiyogi::values {
 
-class MetricData;
-class MetricDataVector;
-
-class StoreBuilder final
-{
-  public:
-    using store_builder_type = metric_id_trie<double>;
-    store_builder_type m_store_builder;
-
-    void Add(const MetricData & p_metric_data);
-    void Add(const MetricDataVector & p_metric_data);
-};
-
 class Store final
 {
   public:
+    using store_builder_type = metric_id_trie<yy_quad::AtomicWrapper<double>>;
+    using store_type = store_builder_type::automaton_type;
+    using value_type = store_builder_type::value_type;
+    using value_ptr = store_builder_type::value_ptr;
+
+    Store(store_type && p_store):
+      m_store(std::move(p_store))
+    {
+    }
+
+    constexpr Store() noexcept = default;
+    constexpr Store(const Store &) noexcept = delete;
+    constexpr Store(Store &&) noexcept = default;
+
+    constexpr Store & operator=(const Store &) noexcept = delete;
+    constexpr Store & operator=(Store &&) noexcept = default;
+
     template<typename Visitor>
     [[nodiscard]]
     constexpr bool Find(Visitor && p_visitor,
-                        const MetricId & p_metric) noexcept
+                        const values::MetricId & p_metric,
+                        std::string_view p_label) noexcept
     {
-      return m_store.find(std::forward<Visitor>(p_visitor), p_metric);
+      return m_store.find(std::forward<Visitor>(p_visitor), p_metric, p_label);
     }
 
     template<typename Visitor>
@@ -68,8 +75,24 @@ class Store final
     }
 
   private:
-    using store_type = StoreBuilder::store_builder_type::automaton_type;
+
     store_type m_store{};
+};
+
+using StorePtr = std::shared_ptr<Store>;
+using StoreObsPtr = yy_data::observer_ptr<Store>;
+
+class StoreBuilder final
+{
+  public:
+    void Add(const std::string & value_id);
+    StorePtr Create();
+
+  private:
+    using store_builder_type = Store::store_builder_type;
+    using value_type = store_builder_type::value_type;
+
+    store_builder_type m_store_builder{};
 };
 
 } // namespace yafiyogi::values

@@ -30,26 +30,19 @@
 
 #include "spdlog/spdlog.h"
 
-#include "yy_cpp/yy_flat_set.h"
-
-#include "yy_prometheus_metric_data.h"
-#include "yy_prometheus_cache.h"
+#include "values_metric_data.h"
+#include "values_store.hpp"
 
 namespace yafiyogi::values {
 
-void ValuesStore::Add(const MetricData & p_metric_data)
+void StoreBuilder::Add(const std::string & value_id)
 {
-  std::unique_lock lck{m_cache_mtx};
-
-  m_store.emplace_or_assign(p_metric_data.Id(), p_metric_data);
+  m_store_builder.add(value_id, value_type{});
 }
 
-void ValuesStore::Add(const MetricDataVector & p_metric_data)
+StorePtr StoreBuilder::Create()
 {
-  for(auto & metric_data : p_metric_data)
-  {
-    Add(metric_data);
-  }
+  return std::make_shared<Store>(m_store_builder.create_automaton());
 }
 
 } // namespace yafiyogi::values
