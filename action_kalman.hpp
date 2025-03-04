@@ -33,9 +33,43 @@
 #include "yy_maths/yy_ekf.hpp"
 
 #include "action.hpp"
-#include "action_var_idx.hpp"
 
 namespace yafiyogi::mendel::actions {
+namespace kalman_action_detail {
+
+struct OutputMapping
+{
+    constexpr bool operator<(const std::string & value) const noexcept
+    {
+      return var < value;
+    }
+
+    constexpr bool operator==(const std::string & value) const noexcept
+    {
+      return var == value;
+    }
+
+    std::string var{};
+    size_type output_idx = 0;
+};
+
+struct InputMapping
+{
+    constexpr bool operator<(const std::string & value) const noexcept
+    {
+      return var < value;
+    }
+
+    constexpr bool operator==(const std::string & value) const noexcept
+    {
+      return var == value;
+    }
+
+    std::string var{};
+    size_type input_idx = 0;
+    size_type output_idx = 0;
+};
+}
 
 using KalmanOptions = yy_data::flat_map<std::string, std::string>;
 
@@ -58,9 +92,13 @@ class KalmanAction final:
     vector m_hx{};
 
     std::string m_output_topic{};
-    using VarIdxVector = yy_quad::simple_vector<var_idx>;
-    VarIdxVector m_outputs{};
-    VarIdxVector m_inputs{};
+
+    using OutputMap = yy_quad::simple_vector<kalman_action_detail::OutputMapping>;
+    OutputMap m_outputs{};
+
+    using InputMap = yy_quad::simple_vector<kalman_action_detail::InputMapping>;
+
+    InputMap m_inputs{};
 };
 
 } // namespace yafiyogi::mendel::actions

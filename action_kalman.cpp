@@ -26,7 +26,10 @@
 
 #include <charconv>
 
+#include "spdlog/spdlog.h"
+
 #include "yy_cpp/yy_find_iter_util.hpp"
+
 #include "action_kalman.hpp"
 #include "values_store.hpp"
 
@@ -42,13 +45,15 @@ KalmanAction::KalmanAction(std::string && p_output_topic,
     if(auto output{yy_data::find_iter(m_outputs, output_id)};
        !output.found)
     {
+      spdlog::debug("output: [{}] n=[{}]", output_id, idx_n);
+
       m_outputs.emplace(output.iter, output_id, idx_n);
       ++idx_n;
     }
   });
 
   // Compact outputs.
-  VarIdxVector{m_outputs}.swap(m_outputs);
+  OutputMap{m_outputs}.swap(m_outputs);
 
   // Initialize inputs.
   size_type idx_m = 0;
@@ -56,34 +61,31 @@ KalmanAction::KalmanAction(std::string && p_output_topic,
     if(auto input{yy_data::find_iter(m_inputs, input_id)};
        !input.found)
     {
-      if(auto output = yy_data::find_iter(m_outputs, output_id);
-         output.found)
+      if(auto [output, output_found] = yy_data::find_iter(m_outputs, output_id);
+         output_found)
       {
-        m_inputs.emplace(input.iter, input_id, idx_m);
+        spdlog::debug("input: [{}] m=[{}] out=[{}] n=[{}]",
+                      input_id, idx_m,
+                      output->var, output->output_idx);
+
+        m_inputs.emplace(input.iter, input_id, idx_m, output->output_idx);
         ++idx_m;
       }
     }
   });
 
   // Compact inputs.
-  VarIdxVector{m_inputs}.swap(m_inputs);
+  InputMap{m_inputs}.swap(m_inputs);
 
   const size_type m = m_inputs.size();
   const size_type n = m_outputs.size();
 
-  matrix H{m, n};
+  matrix H{ekf::zero_matrix{m, n}};
 
-  p_options.visit([&H, this](const auto & input_id, const auto & output_id) {
-    if(auto input = yy_data::find_iter(m_inputs, input_id);
-       !input.found)
-    {
-      if(auto output = yy_data::find_iter(m_outputs, output_id);
-         output.found)
-      {
-        H(input.iter->idx(), output.iter->idx()) = 1.0;
-      }
-    }
-  });
+  for(const auto & input : m_inputs)
+  {
+    H(input.input_idx, input.output_idx) = 1.0;
+  }
 
   vector initial{n, 1.0};
 
@@ -93,21 +95,17 @@ KalmanAction::KalmanAction(std::string && p_output_topic,
   m_observations.resize(m);
 }
 
-void KalmanAction::Run(const values::Store & store) noexcept
+void KalmanAction::Run(const values::Store & values_store) noexcept
 {
-  m_ekf.predict();
-
-  m_hx = m_ekf.X();
-
   size_type count = m_inputs.size();
 
-  for(const auto & [input, idx_m] : m_inputs)
+  for(auto & [input, input_idx, _] : m_inputs)
   {
-    auto get_value = [idx_m, this](const auto & value) {
-      m_observations(idx_m) = value;
+    auto get_value = [input_idx, this](auto value) {
+      m_observations(input_idx) = value->load(std::memory_order_acquire);
     };
 
-    if(!store.Find(get_value, input))
+    if(!values_store.Find(get_value, input))
     {
       break;
     }
@@ -116,6 +114,13 @@ void KalmanAction::Run(const values::Store & store) noexcept
 
   if(0 == count)
   {
+    m_ekf.predict();
+
+    for(const auto & [_, input, output] : m_inputs)
+    {
+      m_hx(input) = m_ekf.X(output);
+    }
+
     m_ekf.update(m_observations, m_hx);
   }
 }
