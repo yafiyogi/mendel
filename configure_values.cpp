@@ -269,7 +269,7 @@ MetricsMap configure_values(const YAML::Node & yaml_values)
       yy_data::flat_set<std::string_view> handlers{};
       handlers.reserve(yaml_handlers.size());
 
-      auto value_id{yy_util::trim(yy_util::yaml_get_value<std::string_view>(yaml_value, "value"sv))};
+      auto value_id{yy_util::trim(yy_util::yaml_get_value<std::string_view>(yaml_value["value"sv]))};
       spdlog::info(" Configuring Value [{}]."sv,
                    value_id);
       spdlog::trace("  [line {}]."sv,
