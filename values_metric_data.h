@@ -31,6 +31,7 @@
 #include <string>
 
 #include "yy_cpp/yy_vector.h"
+#include "yy_cpp/yy_observer_ptr.hpp"
 
 #include "value_type.h"
 #include "values_metric_id.h"
@@ -139,5 +140,5 @@ class MetricData final
 };
 
 using MetricDataVector = yy_quad::simple_vector<MetricData>;
-
+using MetricDataVectorPtr = yy_data::observer_ptr<MetricDataVector>;
 } // namespace yafiyogi::values
