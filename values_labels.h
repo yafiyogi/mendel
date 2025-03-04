@@ -36,7 +36,7 @@
 
 namespace yafiyogi::values {
 
-inline constexpr const std::string_view g_label_topic{"topic"};
+inline constexpr std::string_view g_label_topic{"topic"};
 
 class Labels final
 {
@@ -71,7 +71,7 @@ class Labels final
     void erase(const std::string_view p_label);
 
     [[nodiscard]]
-    constexpr size_t size() const noexcept
+    constexpr size_type size() const noexcept
     {
       return m_labels.size();
     }

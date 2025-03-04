@@ -87,7 +87,7 @@ mqtt_topics configure_mqtt_topics(const YAML::Node & yaml_topics,
         }
 
         subscriptions.reserve(subscriptions.size() + filters.size());
-        for(std::size_t idx = 0; idx < filters.size(); ++idx)
+        for(size_type idx = 0; idx < filters.size(); ++idx)
         {
           auto filter = filters[idx];
           spdlog::info("   - subscribing to topic [{}]"sv, filter);
