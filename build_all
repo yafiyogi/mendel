@@ -1,0 +1,42 @@
+#!/bin/sh
+
+set -e
+
+YY_MAKE="$(which make) -j 4"
+
+echo "\nyy_test"
+cd ../yy_test/build
+${YY_MAKE} all install || exit 1
+
+echo "\nyy_tp_util"
+cd ../../yy_tp_util/build
+${YY_MAKE} all install || exit 1
+
+echo "\nyy_cpp"
+cd ../../yy_cpp/build
+${YY_MAKE} all test install || exit 1
+
+echo "\nyy_json"
+cd ../../yy_json/build
+${YY_MAKE} all test install || exit 1
+
+echo "\nyy_maths"
+cd ../../yy_maths/build
+${YY_MAKE} all install || exit 1
+
+echo "\nyy_mqtt"
+cd ../../yy_mqtt/build
+${YY_MAKE} all test install || exit 1
+
+echo "\nyy_prometheus"
+cd ../../yy_prometheus/build
+${YY_MAKE} all install || exit 1
+
+echo "\nyy_web"
+cd ../../yy_web/build
+${YY_MAKE} all install || exit 1
+
+echo "\nmendel"
+cd ../../mendel/build-dir
+${YY_MAKE} all || exit 1
+cd ../

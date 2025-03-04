@@ -1,0 +1,46 @@
+#!/bin/sh
+
+set -e
+
+build_type="$1"
+
+if [ -z "${build_type}" ]
+then
+    echo "No build type!"
+fi
+
+YY_INSTALL_DIR="${HOME}/code/cpp/build"
+YY_TP_DIR="${HOME}/code/tp"
+
+echo "\nyy_test"
+cd ../yy_test/build
+cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} .
+
+echo "\nyy_tp_util"
+cd ../../yy_tp_util/build
+cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} .
+
+echo "\nyy_cpp"
+cd ../../yy_cpp/build
+cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} .
+
+echo "\nyy_json"
+cd ../../yy_json/build
+cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} .
+
+echo "\nyy_mqtt"
+cd ../../yy_mqtt/build
+cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} .
+
+echo "\nyy_prometheus"
+cd ../../yy_prometheus/build
+cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} .
+
+echo "\nyy_web"
+cd ../../yy_web/build
+cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} .
+
+echo "\nmendel"
+cd ../../mendel/build-dir
+cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} .
+cd ../

@@ -1,0 +1,43 @@
+#!/bin/sh
+
+set -e
+
+echo "\nyy_cmake"
+cd ../yy_cmake
+git pull origin
+
+echo "\nyy_test"
+cd ../yy_test
+git pull origin
+
+echo "\nyy_tp_util"
+cd ../yy_tp_util
+git pull origin
+
+echo "\nyy_cpp"
+cd ../yy_cpp
+git pull origin
+
+echo "\nyy_json"
+cd ../yy_json
+git pull origin
+
+echo "\nyy_maths"
+cd ../yy_maths
+git pull origin
+
+echo "\nyy_mqtt"
+cd ../yy_mqtt
+git pull origin
+
+echo "\nyy_prometheus"
+cd ../yy_prometheus
+git pull origin
+
+echo "\nyy_web"
+cd ../yy_web
+git pull origin
+
+echo "\nyy_mqtt_bridge"
+cd ../mendel
+git pull origin

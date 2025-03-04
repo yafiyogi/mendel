@@ -1,0 +1,23 @@
+#!/bin/sh
+
+set -e
+
+YY_MAKE="$(which make) -j 4"
+build_dirs="yy_test/build yy_tp_util/build yy_cpp/build yy_json/build yy_maths/build yy_mqtt/build yy_prometheus/build yy_web/build mendel/build-dir"
+dir_prefix=".."
+
+targets="${*}"
+
+if [ -z "${targets}" ]
+then
+    echo "No build type!"
+    exit 1
+fi
+
+for dir in ${build_dirs}
+do
+    echo "\n[${dir}]: [${targets}]"
+    cd "${dir_prefix}/${dir}"
+    dir_prefix="../.."
+    ${YY_MAKE} ${targets} || exit 1
+done

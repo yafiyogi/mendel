@@ -1,0 +1,42 @@
+#!/bin/sh
+
+set -e
+
+YY_MAKE="$(which make) -j 4"
+
+echo "yy_test: cleaning"
+cd ../yy_test/build
+${YY_MAKE} clean || exit 1
+
+echo "yy_tp_util: cleaning"
+cd ../../yy_tp_util/build
+${YY_MAKE} clean || exit 1
+
+echo "yy_cpp: cleaning"
+cd ../../yy_cpp/build
+${YY_MAKE} clean || exit 1
+
+echo "yy_json: cleaning"
+cd ../../yy_json/build
+${YY_MAKE} clean || exit 1
+
+echo "yy_maths"
+cd ../../yy_maths/build
+${YY_MAKE}  clean || exit 1
+
+echo "yy_mqtt: cleaning"
+cd ../../yy_mqtt/build
+${YY_MAKE} clean || exit 1
+
+echo "yy_prometheus: cleaning"
+cd ../../yy_prometheus/build
+${YY_MAKE} clean || exit 1
+
+echo "yy_web: cleaning"
+cd ../../yy_web/build
+${YY_MAKE} clean || exit 1
+
+echo "mendel: cleaning"
+cd ../../mendel/build-dir
+${YY_MAKE} clean || exit 1
+cd ../
