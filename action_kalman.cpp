@@ -35,8 +35,10 @@
 
 namespace yafiyogi::mendel::actions {
 
-KalmanAction::KalmanAction(std::string && p_output_topic,
+KalmanAction::KalmanAction(std::string_view p_id,
+                           std::string_view p_output_topic,
                            const KalmanOptions & p_options):
+  m_id(std::move(p_id)),
   m_output_topic(std::move(p_output_topic))
 {
   // Initialise outputs.
@@ -80,48 +82,42 @@ KalmanAction::KalmanAction(std::string && p_output_topic,
   const size_type m = m_inputs.size();
   const size_type n = m_outputs.size();
 
-  matrix H{ekf::zero_matrix{m, n}};
-
-  for(const auto & input : m_inputs)
-  {
-    H(input.input_idx, input.output_idx) = 1.0;
-  }
-
-  vector initial{n, 1.0};
-
-  m_ekf = ekf{initial, H};
-
-  m_hx.resize(m);
+  m_ekf = yy_maths::ekf{m, n};
+  m_zh = zero_matrix{m, n};
+  m_zhx = zero_vector{m};
   m_observations.resize(m);
 }
 
 void KalmanAction::Run(const values::Store & values_store) noexcept
 {
-  size_type count = m_inputs.size();
+  size_type count = 0;
 
-  for(auto & [input, input_idx, _] : m_inputs)
+  // Zero mapping sensor-function Jacobian matrix h.
+  m_h = m_zh;
+  // Zero vector predicted values hx
+  m_hx = m_zhx;
+
+  for(auto & [input, input_idx, output_idx] : m_inputs)
   {
     auto get_value = [input_idx, this](auto value) {
       m_observations(input_idx) = value->load(std::memory_order_acquire);
     };
 
-    if(!values_store.Find(get_value, input))
+    if(values_store.Find(get_value, input))
     {
-      break;
+      m_h(input_idx, output_idx) = 1.0;
+      m_hx(input_idx) = m_ekf.X(output_idx);
+      ++count;
     }
-    --count;
   }
 
-  if(0 == count)
+  if(count > 0)
   {
     m_ekf.predict();
 
-    for(const auto & [_, input, output] : m_inputs)
-    {
-      m_hx(input) = m_ekf.X(output);
-    }
-
-    m_ekf.update(m_observations, m_hx);
+    spdlog::debug("kalman: [{}]  inputs [{:.2f}]", m_id, fmt::join(m_observations, " "));
+    m_ekf.update(m_observations, m_h, m_hx);
+    spdlog::debug("kalman: [{}] outputs [{:.2f}]", m_id, fmt::join(m_ekf.X(), " "));
   }
 }
 

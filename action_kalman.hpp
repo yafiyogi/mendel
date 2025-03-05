@@ -27,6 +27,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
 #include "yy_cpp/yy_flat_map.h"
 #include "yy_cpp/yy_vector.h"
@@ -69,7 +70,8 @@ struct InputMapping
     size_type input_idx = 0;
     size_type output_idx = 0;
 };
-}
+
+} // namespace kalman_action_detail
 
 using KalmanOptions = yy_data::flat_map<std::string, std::string>;
 
@@ -77,21 +79,33 @@ class KalmanAction final:
       public Action
 {
   public:
-    KalmanAction(std::string && p_output_topic,
+    KalmanAction(std::string_view p_id,
+                 std::string_view p_output_topic,
                  const KalmanOptions & p_options);
     void Run(const values::Store & store) noexcept override;
+
+    constexpr const std::string & Id() const noexcept
+    {
+      return m_id;
+    }
 
   private:
     using ekf = yy_maths::ekf;
     using matrix = ekf::matrix;
+    using zero_matrix = ekf::zero_matrix;
     using vector = ekf::vector;
+    using zero_vector = ekf::zero_vector;
     using size_type = ekf::size_type;
+
+    std::string m_id;
+    std::string m_output_topic{};
 
     ekf m_ekf{};
     vector m_observations{};
+    matrix m_h{};
+    zero_matrix m_zh{};
     vector m_hx{};
-
-    std::string m_output_topic{};
+    zero_vector m_zhx{};
 
     using OutputMap = yy_quad::simple_vector<kalman_action_detail::OutputMapping>;
     OutputMap m_outputs{};
