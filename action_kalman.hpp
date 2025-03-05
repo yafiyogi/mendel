@@ -103,9 +103,7 @@ class KalmanAction final:
     ekf m_ekf{};
     vector m_observations{};
     matrix m_h{};
-    zero_matrix m_zh{};
     vector m_hx{};
-    zero_vector m_zhx{};
 
     using OutputMap = yy_quad::simple_vector<kalman_action_detail::OutputMapping>;
     OutputMap m_outputs{};

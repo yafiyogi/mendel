@@ -83,20 +83,17 @@ KalmanAction::KalmanAction(std::string_view p_id,
   const size_type n = m_outputs.size();
 
   m_ekf = yy_maths::ekf{m, n};
-  m_zh = zero_matrix{m, n};
-  m_zhx = zero_vector{m};
   m_observations.resize(m);
 }
 
 void KalmanAction::Run(const values::Store & values_store) noexcept
 {
-  size_type count = 0;
-
   // Zero mapping sensor-function Jacobian matrix h.
-  m_h = m_zh;
+  m_h = zero_matrix{m_h.size1(), m_h.size2()};
   // Zero vector predicted values hx
-  m_hx = m_zhx;
+  m_hx = zero_vector{m_hx.size()};
 
+  bool do_calc = false;
   for(auto & [input, input_idx, output_idx] : m_inputs)
   {
     auto get_value = [input_idx, this](auto value) {
@@ -107,11 +104,11 @@ void KalmanAction::Run(const values::Store & values_store) noexcept
     {
       m_h(input_idx, output_idx) = 1.0;
       m_hx(input_idx) = m_ekf.X(output_idx);
-      ++count;
+      do_calc = true;
     }
   }
 
-  if(count > 0)
+  if(do_calc)
   {
     m_ekf.predict();
 
