@@ -97,12 +97,14 @@ void configure_kalman(const YAML::Node & yaml_kalman,
 
     if(!options.empty())
     {
+      auto action_id{yy_util::trim(yy_util::yaml_get_value<std::string_view>(yaml_kalman["action_id"sv]))};
       spdlog::info("  Configuring Kalman Filter [{}]."sv,
-                   yy_util::yaml_get_value<std::string_view>(yaml_kalman["action_id"sv]));
+                   action_id);
 
       auto output_topic{yy_util::yaml_get_value<std::string_view>(yaml_kalman["output_topic"sv])};
 
-      actions::ActionPtr action{std::make_unique<actions::KalmanAction>(std::string{output_topic},
+      actions::ActionPtr action{std::make_unique<actions::KalmanAction>(action_id,
+                                                                        output_topic,
                                                                         std::move(options))};
 
       for(auto & input : inputs)
