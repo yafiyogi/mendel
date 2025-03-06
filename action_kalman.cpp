@@ -86,12 +86,13 @@ KalmanAction::KalmanAction(std::string_view p_id,
   m_observations.resize(m);
 }
 
-void KalmanAction::Run(const values::Store & values_store) noexcept
+void KalmanAction::Run(const Params & params,
+                       const values::Store & /* values_store */) noexcept
 {
   // Zero mapping sensor-function Jacobian matrix h.
-  m_h = zero_matrix{m_h.size1(), m_h.size2()};
+  m_h = zero_matrix{m_ekf.M(), m_ekf.N()};
   // Zero vector predicted values hx
-  m_hx = zero_vector{m_hx.size()};
+  m_hx = zero_vector{m_ekf.M()};
 
   bool do_calc = false;
   for(auto & [input, input_idx, output_idx] : m_inputs)
