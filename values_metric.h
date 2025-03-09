@@ -48,7 +48,8 @@ class Metric final
     explicit Metric(MetricId && p_id,
                     std::string && p_property,
                     LabelActions && p_label_actions,
-                    ValueActions && p_value_actions);
+                    ValueActions && p_value_actions,
+                    LabelActions && p_metric_property_actions);
 
     constexpr Metric() noexcept = default;
     constexpr Metric(const Metric &) noexcept = default;
@@ -64,7 +65,7 @@ class Metric final
     const std::string & Property() const noexcept;
 
     void Event(std::string_view p_value,
-               const Labels & p_labels,
+               const std::string_view p_topic,
                const yy_mqtt::TopicLevelsView & p_levels,
                const int64_t p_timestamp,
                ValueType p_value_type,
@@ -73,8 +74,11 @@ class Metric final
   private:
     MetricData m_metric_data{};
     std::string m_property{};
+
     LabelActions m_label_actions{};
     ValueActions m_value_actions{};
+    LabelActions m_metric_property_actions{};
+    Labels m_metric_properties{};
 };
 
 using MetricPtr = std::shared_ptr<Metric>;
