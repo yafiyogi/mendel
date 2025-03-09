@@ -26,10 +26,11 @@
 
 #pragma once
 
-#include <string_view>
+#include <memory>
 
 namespace yafiyogi::mendel {
 
-constexpr inline std::string_view g_label_location{"location"};
+class ActionsHandler;
+using ActionsHandlerPtr = std::shared_ptr<ActionsHandler>;
 
 } // namespace yafiyogi::mendel
