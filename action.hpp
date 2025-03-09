@@ -28,6 +28,11 @@
 
 #include <memory>
 
+#include "yy_cpp/yy_observer_ptr.hpp"
+#include "yy_cpp/yy_vector.h"
+
+#include "values_metric_data.h"
+
 namespace yafiyogi::values {
 
 class Store;
@@ -37,6 +42,8 @@ class Store;
 namespace yafiyogi::mendel::actions {
 
 class Store;
+
+using ParamVector = yy_quad::simple_vector<values::MetricDataObsPtr>;
 
 class Action
 {
@@ -49,9 +56,11 @@ class Action
     constexpr Action & operator=(const Action &) noexcept = default;
     constexpr Action & operator=(Action &&) noexcept = default;
 
-    virtual void Run(const values::Store & store) noexcept = 0;
+    virtual void Run(const ParamVector & params,
+                     const values::Store & store) noexcept = 0;
 };
 
 using ActionPtr = std::unique_ptr<Action>;
+using ActionObsPtr = yy_data::observer_ptr<Action>;
 
 } // namespace yafifogi::mendel::actions
