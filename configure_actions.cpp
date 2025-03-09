@@ -90,7 +90,7 @@ void configure_kalman(const YAML::Node & yaml_kalman,
 
       if(!input.empty() && !output.empty())
       {
-        options.emplace(std::string{input}, std::string{output});
+        options.emplace(values::MetricId{input}, values::MetricId{output});
         inputs.emplace_back(std::string{input});
       }
     }
