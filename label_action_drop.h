@@ -48,9 +48,13 @@ class DropLabelAction:
     constexpr DropLabelAction & operator=(const DropLabelAction &) noexcept = default;
     constexpr DropLabelAction & operator=(DropLabelAction &&) noexcept = default;
 
-    void Apply(const Labels & /* labels */,
-               const yy_mqtt::TopicLevelsView & p_levels,
-               Labels & /* metric_labels */) noexcept override;
+    void Apply(const Labels & p_labels_in,
+               const yy_mqtt::TopicLevelsView & p_levels_in,
+               Labels & p_labels_out) noexcept override;
+
+    void Apply(const Labels & p_labels_in,
+               const yy_mqtt::TopicLevelsView & p_levels_in,
+               std::string & p_label_out) noexcept override;
 
     static constexpr const std::string_view action_name{"drop"};
     constexpr std::string_view Name() const noexcept override

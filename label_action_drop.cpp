@@ -37,12 +37,18 @@ DropLabelAction::DropLabelAction(std::string && p_label_name) noexcept:
 {
 }
 
-void DropLabelAction::Apply(const Labels & /* labels */,
-                            const yy_mqtt::TopicLevelsView & /* p_levels */,
-                            Labels & metric_labels) noexcept
+void DropLabelAction::Apply(const Labels & /* p_labels_in */,
+                            const yy_mqtt::TopicLevelsView & /* p_levels_in */,
+                            Labels & p_labels_out) noexcept
 {
-  metric_labels.erase(m_label_name);
+  p_labels_out.erase(m_label_name);
 }
 
+void DropLabelAction::Apply(const Labels & /* p_labels_in */,
+                            const yy_mqtt::TopicLevelsView & /* p_levels_in */,
+                            std::string & /* p_label_out */) noexcept
+{
+  // Do nothing.
+}
 
 } // namespace yafiyogi::values

@@ -38,15 +38,26 @@ CopyLabelAction::CopyLabelAction(std::string && p_label_source,
 {
 }
 
-void CopyLabelAction::Apply(const Labels & labels,
-                            const yy_mqtt::TopicLevelsView & /* p_levels */,
-                            Labels & metric_labels) noexcept
+void CopyLabelAction::Apply(const Labels & p_labels_in,
+                            const yy_mqtt::TopicLevelsView & /* p_levels_in */,
+                            Labels & p_labels_out) noexcept
 {
-  auto do_copy_label = [this, &metric_labels](auto label_value, auto) {
-    metric_labels.set_label(m_label_target, *label_value);
+  auto do_copy_label = [this, &p_labels_out](auto label_value, auto) {
+    p_labels_out.set_label(m_label_target, *label_value);
   };
 
-  std::ignore = labels.get_label(do_copy_label, m_label_source);
+  std::ignore = p_labels_in.get_label(do_copy_label, m_label_source);
+}
+
+void CopyLabelAction::Apply(const Labels & p_labels_in,
+                            const yy_mqtt::TopicLevelsView & /* p_levels_in */,
+                            std::string & p_label_out) noexcept
+{
+  auto do_copy_label = [this, &p_label_out](auto label_value, auto) {
+    p_label_out = *label_value;
+  };
+
+  std::ignore = p_labels_in.get_label(do_copy_label, m_label_source);
 }
 
 

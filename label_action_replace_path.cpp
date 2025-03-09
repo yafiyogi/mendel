@@ -24,14 +24,16 @@
 
 */
 
-#include <cstddef>
-
-#include <string>
 #include <memory>
+#include <string>
+
+#include "fmt/format.h"
 
 #include "yy_cpp/yy_variant_util.h"
-#include "values_labels.h"
+
 #include "label_action.h"
+#include "values_labels.h"
+#include "values_metric_labels.hpp"
 
 #include "replacement_format.h"
 
@@ -42,40 +44,40 @@ namespace yafiyogi::values {
 ReplacePathLabelAction::ReplacePathLabelAction(std::string && p_label_name,
                                                ReplacementTopics && p_topics) noexcept:
   m_label_name(std::move(p_label_name)),
-  m_label_value(),
   m_topics(std::move(p_topics))
 {
 }
 
-void ReplacePathLabelAction::Apply(const Labels & /* labels */,
-                                   const yy_mqtt::TopicLevelsView & p_levels,
-                                   Labels & metric_labels) noexcept
+void ReplacePathLabelAction::Apply(const Labels & p_labels_in,
+                                   const yy_mqtt::TopicLevelsView & p_levels_in,
+                                   Labels & p_labels_out) noexcept
 {
-  if(auto payloads = m_topics.find(metric_labels.get_label(g_label_topic));
+  Apply(p_labels_in, p_levels_in, p_labels_out.set_label(m_label_name, std::string_view{}));
+}
+
+void ReplacePathLabelAction::Apply(const Labels & p_labels_in,
+                                   const yy_mqtt::TopicLevelsView & p_levels_in,
+                                   std::string & p_label_out) noexcept
+{
+  if(auto payloads = m_topics.find(p_labels_in.get_label(g_label_topic));
      !payloads.empty())
   {
-    for(const auto & replacements : payloads)
+    const auto & topic_format = *payloads[0];
+
+    p_label_out.clear();
+
+    auto format_fn = [&p_levels_in, &p_label_out](const auto & formatter) {
+      formatter(p_levels_in, p_label_out);
+    };
+
+    for(const auto & format_element : topic_format)
     {
-      for(const auto & format : *replacements)
-      {
-        m_label_value.clear();
-
-        auto format_fn = [&p_levels, this](const auto & formatter)
-        {
-          formatter(p_levels, m_label_value);
-        };
-
-        for(const auto & fmt_elem : format)
-        {
-          std::visit(format_fn,
-                     fmt_elem);
-        }
-
-        metric_labels.set_label(m_label_name, m_label_value);
-      }
+      std::visit(format_fn,
+                 format_element);
     }
   }
 }
+
 
 
 } // namespace yafiyogi::values

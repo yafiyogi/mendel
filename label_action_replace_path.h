@@ -32,14 +32,14 @@
 
 #include "yy_cpp/yy_vector.h"
 
-#include "yy_mqtt/yy_mqtt_state_topics.h"
+#include "yy_mqtt/yy_mqtt_variant_state_topics.h"
 
 #include "label_action.h"
 #include "replacement_format.h"
 
 namespace yafiyogi::values {
 
-using ReplacementTopicsConfig = yy_mqtt::state_topics<ReplaceFormats>;
+using ReplacementTopicsConfig = yy_mqtt::variant_state_topics<ReplaceFormat>;
 using ReplacementTopics = ReplacementTopicsConfig::automaton_type;
 
 class ReplacePathLabelAction:
@@ -55,9 +55,13 @@ class ReplacePathLabelAction:
     constexpr ReplacePathLabelAction & operator=(const ReplacePathLabelAction &) noexcept = default;
     constexpr ReplacePathLabelAction & operator=(ReplacePathLabelAction &&) noexcept = default;
 
-    void Apply(const Labels & /* labels */,
-               const yy_mqtt::TopicLevelsView & p_levels,
-               Labels & /* metric_labels */) noexcept override;
+    void Apply(const Labels & p_labels_in,
+               const yy_mqtt::TopicLevelsView & p_levels_in,
+               Labels & p_labels_out) noexcept override;
+
+    void Apply(const Labels & p_labels_in,
+               const yy_mqtt::TopicLevelsView & p_levels_in,
+               std::string & p_label_out) noexcept override;
 
     static constexpr const std::string_view action_name{"replace-path"};
     constexpr std::string_view Name() const noexcept override
@@ -67,7 +71,6 @@ class ReplacePathLabelAction:
 
   private:
     std::string m_label_name{};
-    std::string m_label_value{};
     ReplacementTopics m_topics{};
 };
 

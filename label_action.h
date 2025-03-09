@@ -45,9 +45,14 @@ class LabelAction
     constexpr LabelAction & operator=(const LabelAction &) noexcept = default;
     constexpr LabelAction & operator=(LabelAction &&) noexcept = default;
 
-    virtual void Apply(const Labels & /* labels */,
-                       const yy_mqtt::TopicLevelsView & p_levels,
-                       Labels & /* metric_labels */) noexcept = 0;
+    virtual void Apply(const Labels & /* p_labels_in */,
+                       const yy_mqtt::TopicLevelsView & p_levels_in,
+                       Labels & /* p_labels_out */) noexcept = 0;
+
+    virtual void Apply(const Labels & /* p_labels_in */,
+                       const yy_mqtt::TopicLevelsView & p_levels_in,
+                       std::string & /* p_label_out */) noexcept = 0;
+
     virtual std::string_view Name() const noexcept = 0;
 };
 

@@ -49,9 +49,13 @@ class CopyLabelAction:
     constexpr CopyLabelAction & operator=(const CopyLabelAction &) noexcept = default;
     constexpr CopyLabelAction & operator=(CopyLabelAction &&) noexcept = default;
 
-    void Apply(const Labels & /* labels */,
-               const yy_mqtt::TopicLevelsView & p_levels,
-               Labels & /* metric_labels */) noexcept override;
+    void Apply(const Labels & p_labels_in,
+               const yy_mqtt::TopicLevelsView & p_levels_in,
+               Labels & p_labels_out) noexcept override;
+
+    void Apply(const Labels & p_labels_in,
+               const yy_mqtt::TopicLevelsView & p_levels_in,
+               std::string & p_label_out) noexcept override;
 
     static constexpr const std::string_view action_name{"copy"};
     constexpr std::string_view Name() const noexcept override
