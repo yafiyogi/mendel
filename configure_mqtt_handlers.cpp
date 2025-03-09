@@ -104,36 +104,42 @@ MqttHandlerPtr configure_json_handler(std::string_view p_id,
 
     yy_data::flat_set<std::string_view> properties{};
     properties.reserve(yaml_properties.size());
-    for(const auto & yaml_property : yaml_properties)
-    {
-      if(yaml_property.IsScalar())
-      {
-        property = yy_util::trim(yaml_property.as<std::string_view>());
-        json_pointer = fmt::format("/{}"_cf, property);
-      }
-      else
-      {
-        property = yy_util::trim(yaml_property["id"sv].as<std::string_view>());
-        json_pointer = yy_json::json_pointer_trim(yaml_property["json"sv].as<std::string_view>());
-      }
-      spdlog::info("     - property [{}] path=[{}]:"sv,
-                   property,
-                   json_pointer);
-      spdlog::trace("        [line {}]."sv,
-                    yaml_property.Mark().line + 1);
 
-      if(!json_pointer.empty()
-         && !property.empty())
+    spdlog::trace("        [line {}]."sv,
+                   yaml_properties.Mark().line + 1);
+    if(const bool is_sequence = yaml_properties.IsSequence();
+       is_sequence || yaml_properties.IsMap())
+    {
+      for(const auto & yaml_property : yaml_properties)
       {
-        // Avoid duplicates.
-        if(auto [ignore, inserted] = properties.emplace(property);
-           inserted)
+        if(is_sequence && yaml_property.IsScalar())
         {
-          std::ignore = values_metrics.find_value(do_add_property, p_id);
+          property = yy_util::trim(yaml_property.as<std::string_view>());
+          json_pointer = fmt::format("/{}"_cf, property);
         }
-        else
+        else if(!is_sequence)
         {
-          spdlog::warn("   * already added!"sv);
+          json_pointer = yy_json::json_pointer_trim(yy_util::trim(yy_util::yaml_get_value<std::string_view>(yaml_property.first)));
+          property = yy_util::trim(yy_util::yaml_get_value<std::string_view>(yaml_property.second));
+        }
+
+        spdlog::info("     - property [{}] path=[{}]:"sv,
+                     property,
+                     json_pointer);
+
+        if(!json_pointer.empty()
+           && !property.empty())
+        {
+          // Avoid duplicates.
+          if(auto [ignore, inserted] = properties.emplace(property);
+             inserted)
+          {
+            std::ignore = values_metrics.find_value(do_add_property, p_id);
+          }
+          else
+          {
+            spdlog::warn("   * already added!"sv);
+          }
         }
       }
     }
@@ -187,7 +193,11 @@ MqttHandlerPtr configure_value_handler(std::string_view p_id,
   std::ignore = values_metrics.find_value(do_add_property, p_id);
 
   MqttHandlerPtr handler{};
-  if(!handler_metrics.empty())
+  if(handler_metrics.empty())
+  {
+    spdlog::warn("       no metrics found!."sv);
+  }
+  else
   {
     handler = std::make_unique<MqttValueHandler>(p_id, std::move(handler_metrics));
   }
