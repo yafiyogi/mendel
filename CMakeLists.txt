@@ -77,11 +77,12 @@ add_executable(mendel
   mqtt_handler.cpp
   mqtt_handler_json.cpp
   mqtt_handler_value.cpp
-  values_metric.cpp
   replacement_format.cpp
   value_action_keep.cpp
   value_action_switch.cpp
   values_labels.cpp
+  values_metric.cpp
+  values_metric_id.cpp
   values_store.cpp
   values_metric_data.cpp
   mendel.cpp )
