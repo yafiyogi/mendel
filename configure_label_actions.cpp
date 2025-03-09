@@ -57,9 +57,6 @@ constexpr auto escapes =
   yy_data::make_lookup<std::string_view, std::string_view>({{"n"sv, "\n"sv},
                                                             {"t"sv, "\t"sv}});
 
-} // namespace
-
-
 template<typename Visitor>
 void configure_label_action_replace_format(std::string_view replacement_format,
                                            Visitor && visitor)
@@ -117,39 +114,45 @@ void configure_label_action_replace_format(std::string_view replacement_format,
   }
 }
 
+} // namespace
+
+void configure_label_action_replace_path_format(const YAML::Node & yaml_format,
+                                         ReplacementTopicsConfig & p_topics_config)
+{
+  if(yaml_format)
+  {
+    std::string_view replacement_pattern{"#"};
+    std::string_view replacement_format{};
+
+    if(yy_util::yaml_is_scalar(yaml_format))
+    {
+      replacement_format = yy_util::yaml_get_value<std::string_view>(yaml_format);
+    }
+    else
+    {
+      replacement_pattern = yy_util::trim(yy_util::yaml_get_value(yaml_format["pattern"sv], "#"sv));
+      replacement_format = yy_util::trim(yy_util::yaml_get_value<std::string_view>(yaml_format["format"sv]));
+    }
+
+    if(yy_mqtt::TopicValidStatus::Valid == yy_mqtt::topic_validate(replacement_pattern, yy_mqtt::TopicType::Filter))
+    {
+      configure_label_action_replace_format(replacement_format,
+                                            [replacement_pattern, &p_topics_config](ReplaceFormat & format)
+                                            {
+                                              std::ignore = p_topics_config.add(replacement_pattern,
+                                                                                std::move(format));
+                                            });
+    }
+  }
+}
+
 ReplacementTopics configure_label_action_replace_path(const YAML::Node & yaml_replace)
 {
   ReplacementTopicsConfig topics_config;
 
   for(const auto & yaml_format : yaml_replace)
   {
-    if(yaml_format)
-    {
-      std::string_view replacement_pattern{"#"};
-      std::string_view replacement_format{};
-
-      if(yy_util::yaml_is_scalar(yaml_format))
-      {
-        replacement_format = yy_util::yaml_get_value<std::string_view>(yaml_format);
-      }
-      else
-      {
-        replacement_pattern = yy_util::trim(yy_util::yaml_get_value(yaml_format["pattern"sv], "#"sv));
-        replacement_format = yy_util::trim(yy_util::yaml_get_value<std::string_view>(yaml_format["format"sv]));
-      }
-
-      if(yy_mqtt::TopicValidStatus::Valid == yy_mqtt::topic_validate(replacement_pattern, yy_mqtt::TopicType::Filter))
-      {
-        configure_label_action_replace_format(replacement_format,
-                                              [replacement_pattern, &topics_config](ReplaceFormat & format)
-                                              {
-                                                auto [topic_formats, ignore] = topics_config.add(replacement_pattern,
-                                                                                                 ReplaceFormats{});
-
-                                                topic_formats->emplace_back(format);
-                                              });
-      }
-    }
+    configure_label_action_replace_path_format(yaml_format, topics_config);
   }
 
   return topics_config.create_automaton();
