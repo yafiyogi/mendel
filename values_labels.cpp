@@ -34,16 +34,28 @@ namespace yafiyogi::values {
 
 const std::string g_empty_str{};
 
+Labels::Labels(size_type p_capacity) noexcept:
+  m_labels(p_capacity)
+{
+}
+
 void Labels::clear() noexcept
 {
   m_labels.clear();
 }
 
-void Labels::set_label(std::string_view p_label,
+void Labels::clear(yy_data::ClearAction p_clear_action) noexcept
+{
+  m_labels.clear(p_clear_action);
+}
+
+std::string & Labels::set_label(std::string_view p_label,
                        std::string_view p_value)
 {
-  m_labels.emplace_or_assign(std::string{p_label},
-                             std::string{p_value});
+  auto [pos, _] = m_labels.emplace_or_assign(std::string{p_label},
+                                           std::string{p_value});
+
+  return *m_labels.value(pos);
 }
 
 const std::string & Labels::get_label(const std::string_view p_label) const noexcept

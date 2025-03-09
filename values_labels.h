@@ -36,8 +36,6 @@
 
 namespace yafiyogi::values {
 
-inline constexpr std::string_view g_label_topic{"topic"};
-
 class Labels final
 {
   public:
@@ -46,6 +44,7 @@ class Labels final
                                          yy_data::ClearAction::Keep,
                                          yy_data::ClearAction::Keep>;
 
+    Labels(size_type capacity) noexcept;
     constexpr Labels() noexcept = default;
     constexpr Labels(const Labels &) noexcept = default;
     constexpr Labels(Labels &&) noexcept = default;
@@ -54,8 +53,9 @@ class Labels final
     constexpr Labels & operator=(Labels &&) noexcept = default;
 
     void clear() noexcept;
-    void set_label(std::string_view p_label,
-                   std::string_view p_value);
+    void clear(yy_data::ClearAction p_clear_action) noexcept;
+    std::string & set_label(std::string_view p_label,
+                            std::string_view p_value);
 
     [[nodiscard]]
     const std::string & get_label(const std::string_view p_label) const noexcept;
