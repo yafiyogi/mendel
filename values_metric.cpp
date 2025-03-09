@@ -29,9 +29,13 @@
 
 #include "spdlog/spdlog.h"
 
-#include "values_labels.h"
-#include "values_metric.h"
+#include "values_metric_id_fmt.hpp"
+
 #include "label_action.h"
+#include "values_labels.h"
+#include "values_metric_labels.hpp"
+
+#include "values_metric.h"
 
 namespace yafiyogi::values {
 
@@ -40,11 +44,14 @@ using namespace std::string_view_literals;
 Metric::Metric(MetricId && p_id,
                std::string && p_property,
                LabelActions && p_label_actions,
-               ValueActions && p_value_actions):
+               ValueActions && p_value_actions,
+               LabelActions && p_metric_property_actions):
   m_metric_data(std::move(p_id)),
   m_property(std::move(p_property)),
   m_label_actions(std::move(p_label_actions)),
-  m_value_actions(std::move(p_value_actions))
+  m_value_actions(std::move(p_value_actions)),
+  m_metric_property_actions(std::move(p_metric_property_actions)),
+  m_metric_properties(m_metric_property_actions.size())
 {
 }
 
@@ -59,7 +66,7 @@ const std::string & Metric::Property() const noexcept
 }
 
 void Metric::Event(std::string_view p_value,
-                   const Labels & p_labels,
+                   const std::string_view p_topic,
                    const yy_mqtt::TopicLevelsView & p_levels,
                    const int64_t p_timestamp,
                    ValueType p_value_type,
@@ -72,13 +79,22 @@ void Metric::Event(std::string_view p_value,
 
   m_metric_data.Value(p_value);
   m_metric_data.Type(p_value_type);
-  m_metric_data.Labels(p_labels);
   m_metric_data.Timestamp(p_timestamp);
+
+  m_metric_properties.clear(yy_data::ClearAction::Keep);
+  m_metric_properties.set_label(g_label_topic, std::string{p_topic});
+
+  for(const auto & action : m_metric_property_actions)
+  {
+    action->Apply(m_metric_properties, p_levels, m_metric_properties);
+  }
+
+  m_metric_data.Id().Location(m_metric_properties.get_label(g_label_location));
 
   for(auto & l_labels = m_metric_data.Labels();
       const auto & action : m_label_actions)
   {
-    action->Apply(l_labels, p_levels, m_metric_data.Labels());
+    action->Apply(m_metric_properties, p_levels, l_labels);
   }
 
   for(const auto & action : m_value_actions)
