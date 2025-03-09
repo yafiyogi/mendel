@@ -29,6 +29,7 @@
 #include <cstdint>
 
 #include <string>
+#include <variant>
 
 #include "yy_cpp/yy_vector.h"
 #include "yy_cpp/yy_observer_ptr.hpp"
@@ -42,16 +43,21 @@ namespace yafiyogi::values {
 class MetricData final
 {
   public:
+    using binary_type = std::variant<double, int64_t, bool>;
     MetricData(MetricId && p_id) noexcept;
 
     constexpr MetricData() noexcept = default;
     constexpr MetricData(const MetricData &) noexcept = default;
     constexpr MetricData(MetricData && p_other) noexcept:
       m_id(std::move(p_other.m_id)),
+      m_labels(std::move(p_other.m_labels)),
       m_timestamp(p_other.m_timestamp),
-      m_value(std::move(p_other.m_value))
+      m_value(std::move(p_other.m_value)),
+      m_binary(std::move(p_other.m_binary)),
+      m_value_type(p_other.m_value_type)
     {
       p_other.m_timestamp = 0;
+      p_other.m_value_type = ValueType::Unknown;
     }
 
     constexpr MetricData & operator=(const MetricData &) noexcept = default;
@@ -60,9 +66,13 @@ class MetricData final
       if(this != &p_other)
       {
         m_id = std::move(p_other.m_id);
+        m_labels = std::move(p_other.m_labels);
         m_timestamp = p_other.m_timestamp;
         p_other.m_timestamp = 0;
         m_value = std::move(p_other.m_value);
+        m_binary = std::move(p_other.m_binary);
+        m_value_type = p_other.m_value_type;
+        p_other.m_value_type = ValueType::Unknown;
       }
       return *this;
     }
@@ -89,17 +99,12 @@ class MetricData final
 
     constexpr values::Labels & Labels() noexcept
     {
-      return m_id.Labels();
+      return m_labels;
     }
 
     constexpr const values::Labels & Labels() const noexcept
     {
-      return m_id.Labels();
-    }
-
-    constexpr void Labels(const values::Labels & p_labels) noexcept
-    {
-      m_id.Labels(p_labels);
+      return m_labels;
     }
 
     constexpr int64_t Timestamp() const noexcept
@@ -122,6 +127,16 @@ class MetricData final
       m_value = p_value;
     }
 
+    constexpr binary_type Binary() const noexcept
+    {
+      return m_binary;
+    }
+
+    constexpr void Binary(binary_type p_binary) noexcept
+    {
+      m_binary = p_binary;
+    }
+
     constexpr ValueType Type() const noexcept
     {
       return m_value_type;
@@ -133,12 +148,16 @@ class MetricData final
     }
 
   private:
-    MetricId m_id;
+    MetricId m_id{};
+    values::Labels m_labels{};
     int64_t m_timestamp = 0;
     std::string m_value{};
+    binary_type m_binary{};
     ValueType m_value_type = ValueType::Unknown;
 };
 
+using MetricDataObsPtr = yy_data::observer_ptr<MetricData>;
 using MetricDataVector = yy_quad::simple_vector<MetricData>;
 using MetricDataVectorPtr = yy_data::observer_ptr<MetricDataVector>;
+
 } // namespace yafiyogi::values
