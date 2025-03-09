@@ -83,7 +83,7 @@ class MqttHandler
     }
 
     virtual void Event(std::string_view p_mqtt_data,
-                       const values::Labels & p_labels ,
+                       const std::string_view p_topic,
                        const yy_mqtt::TopicLevelsView & p_levels ,
                        const int64_t p_timestamp,
                        values::MetricDataVectorPtr p_metric_data) noexcept = 0;

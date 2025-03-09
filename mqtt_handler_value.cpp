@@ -46,17 +46,17 @@ MqttValueHandler::MqttValueHandler(std::string_view p_handler_id,
 }
 
 void MqttValueHandler::Event(std::string_view p_mqtt_data,
-                             const values::Labels & p_labels,
+                             const std::string_view p_topic,
                              const yy_mqtt::TopicLevelsView & p_levels,
                              const int64_t p_timestamp,
-               values::MetricDataVectorPtr p_metric_data) noexcept
+                             values::MetricDataVectorPtr p_metric_data) noexcept
 {
   spdlog::debug("  handler [{}]"sv, Id());
 
   for(auto & metric : m_metrics)
   {
     metric->Event(p_mqtt_data,
-                  p_labels,
+                  p_topic,
                   p_levels,
                   p_timestamp,
                   values::ValueType::Unknown,

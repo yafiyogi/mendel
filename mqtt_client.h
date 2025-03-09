@@ -87,7 +87,6 @@ class mqtt_client final:
     std::string m_host{};
     int m_port = yy_mqtt::mqtt_default_port;
     std::atomic<bool> m_is_connected = false;
-    values::Labels m_labels{};
     yy_mqtt::TopicLevelsView m_path{};
     CacheHandlerPtr m_cache_handler_ptr{};
     yy_data::observer_ptr<CacheHandler> m_cache_handler{};

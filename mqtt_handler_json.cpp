@@ -44,17 +44,7 @@ using namespace std::string_view_literals;
 
 namespace json_handler_detail {
 
-const values::Labels JsonVisitor::g_empty_labels{};
 const yy_mqtt::TopicLevelsView JsonVisitor::g_empty_levels{};
-
-void JsonVisitor::labels(const values::Labels * p_labels) noexcept
-{
-  if(nullptr == p_labels)
-  {
-    p_labels = &g_empty_labels;
-  }
-  m_labels = p_labels;
-}
 
 void JsonVisitor::levels(const yy_mqtt::TopicLevelsView * p_levels) noexcept
 {
@@ -63,6 +53,11 @@ void JsonVisitor::levels(const yy_mqtt::TopicLevelsView * p_levels) noexcept
     p_levels = &g_empty_levels;
   }
   m_levels = p_levels;
+}
+
+void JsonVisitor::topic(const std::string_view p_topic) noexcept
+{
+  m_topic = p_topic;
 }
 
 void JsonVisitor::timestamp(const int64_t p_timestamp) noexcept
@@ -82,7 +77,7 @@ void JsonVisitor::apply(Metrics & p_metrics,
   for(auto & metric : p_metrics)
   {
     metric->Event(p_value,
-                  *m_labels,
+                  m_topic,
                   *m_levels,
                   m_timestamp,
                   p_value_type,
@@ -103,7 +98,7 @@ MqttJsonHandler::MqttJsonHandler(std::string_view p_handler_id,
 }
 
 void MqttJsonHandler::Event(std::string_view p_mqtt_data,
-                            const values::Labels & p_labels ,
+                            const std::string_view p_topic,
                             const yy_mqtt::TopicLevelsView & p_levels,
                             const int64_t p_timestamp,
                             values::MetricDataVectorPtr p_metric_data) noexcept
@@ -118,10 +113,10 @@ void MqttJsonHandler::Event(std::string_view p_mqtt_data,
   auto & visitor = handler.visitor();
 
   visitor.reset();
-  visitor.labels(&p_labels);
   visitor.levels(&p_levels);
-  visitor.timestamp(p_timestamp);
   visitor.metric_data(p_metric_data);
+  visitor.timestamp(p_timestamp);
+  visitor.topic(p_topic);
 
   m_parser.write_some(false,
                       p_mqtt_data.data(),

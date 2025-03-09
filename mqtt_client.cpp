@@ -33,9 +33,11 @@
 
 #include "yy_mqtt/yy_mqtt_util.h"
 
+#include "action.hpp"
 #include "configure_mqtt.h"
-#include "values_labels.h"
 #include "mqtt_handler.h"
+#include "values_labels.h"
+#include "values_metric_labels.hpp"
 
 #include "mqtt_client.h"
 
@@ -87,7 +89,12 @@ void mqtt_client::on_connect(int rc)
     subs.emplace_back(sub.data());
   }
 
-  mosqpp::mosquittopp::subscribe_multiple(nullptr, static_cast<int>(subs.size()), subs.data(), 0, 0, nullptr);
+  mosqpp::mosquittopp::subscribe_multiple(nullptr,
+                                          static_cast<int>(subs.size()),
+                                          subs.data(),
+                                          0,
+                                          0,
+                                          nullptr);
 }
 
 void mqtt_client::on_subscribe(int /* mid */,
@@ -103,6 +110,22 @@ void mqtt_client::on_disconnect(int rc)
   m_is_connected = false;
 }
 
+struct ActionData final
+{
+    bool operator<(const actions::ActionPtr & other) const noexcept
+    {
+      return action < other;
+    }
+
+    bool operator==(const actions::ActionPtr & other) const noexcept
+    {
+      return action == other;
+    }
+
+    actions::ActionPtr action;
+    values::MetricDataVector data;
+};
+
 void mqtt_client::on_message(const struct mosquitto_message * message)
 {
   std::string_view topic{yy_mqtt::topic_trim(message->topic)};
@@ -117,8 +140,6 @@ void mqtt_client::on_message(const struct mosquitto_message * message)
 
     int64_t ts = std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now()).time_since_epoch().count();
 
-    m_labels.set_label(values::g_label_topic, topic);
-
     m_metric_data.clear(yy_data::ClearAction::Keep);
 
     values::MetricDataVectorPtr metric_data{&m_metric_data};
@@ -126,11 +147,11 @@ void mqtt_client::on_message(const struct mosquitto_message * message)
     {
       for(auto & handler : *handlers)
       {
-        handler->Event(data, m_labels, m_path, ts, metric_data);
+        handler->Event(data, topic, m_path, ts, metric_data);
       }
     }
 
-    m_cache_handler->Write(m_metric_data);
+    m_cache_handler->QWrite(m_metric_data);
   }
 }
 
