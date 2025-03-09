@@ -30,6 +30,8 @@
 
 #include "yy_cpp/yy_find_iter_util.hpp"
 
+#include "values_metric_id_fmt.hpp"
+
 #include "action_kalman.hpp"
 #include "values_store.hpp"
 
@@ -47,7 +49,7 @@ KalmanAction::KalmanAction(std::string_view p_id,
     if(auto output{yy_data::find_iter(m_outputs, output_id)};
        !output.found)
     {
-      spdlog::debug("output: [{}] n=[{}]", output_id, idx_n);
+      spdlog::debug("   output: [{}]", output_id);
 
       m_outputs.emplace(output.iter, output_id, idx_n);
       ++idx_n;
@@ -66,9 +68,9 @@ KalmanAction::KalmanAction(std::string_view p_id,
       if(auto [output, output_found] = yy_data::find_iter(m_outputs, output_id);
          output_found)
       {
-        spdlog::debug("input: [{}] m=[{}] out=[{}] n=[{}]",
-                      input_id, idx_m,
-                      output->var, output->output_idx);
+        spdlog::debug("   input: [{}] out=[{}]",
+                      input_id,
+                      output->var);
 
         m_inputs.emplace(input.iter, input_id, idx_m, output->output_idx);
         ++idx_m;
@@ -86,7 +88,7 @@ KalmanAction::KalmanAction(std::string_view p_id,
   m_observations.resize(m);
 }
 
-void KalmanAction::Run(const Params & params,
+void KalmanAction::Run(const ParamVector & p_params,
                        const values::Store & /* values_store */) noexcept
 {
   // Zero mapping sensor-function Jacobian matrix h.
@@ -95,14 +97,22 @@ void KalmanAction::Run(const Params & params,
   m_hx = zero_vector{m_ekf.M()};
 
   bool do_calc = false;
-  for(auto & [input, input_idx, output_idx] : m_inputs)
-  {
-    auto get_value = [input_idx, this](auto value) {
-      m_observations(input_idx) = value->load(std::memory_order_acquire);
-    };
 
-    if(values_store.Find(get_value, input))
+  // Only update changed values.
+  for(auto param : p_params)
+  {
+    if(auto [input, found] = yy_data::find_iter(m_inputs, param->Id());
+       found)
     {
+      auto & [var, input_idx, output_idx] = *input;
+
+      auto set_observation = [&var, input_idx, this](double value) {
+        spdlog::debug("kalman: [{}] [{}]=[{:.2f}]", m_id, var, value);
+        m_observations(input_idx) = value;
+      };
+
+      std::visit(set_observation, param->Binary());
+
       m_h(input_idx, output_idx) = 1.0;
       m_hx(input_idx) = m_ekf.X(output_idx);
       do_calc = true;
@@ -111,11 +121,12 @@ void KalmanAction::Run(const Params & params,
 
   if(do_calc)
   {
+    spdlog::debug("kalman: [{}] previous [{:.2f}]", m_id, fmt::join(m_ekf.X(), " "));
     m_ekf.predict();
 
-    spdlog::debug("kalman: [{}]  inputs [{:.2f}]", m_id, fmt::join(m_observations, " "));
+    spdlog::debug("kalman: [{}]   inputs [{:.2f}]", m_id, fmt::join(m_observations, " "));
     m_ekf.update(m_observations, m_h, m_hx);
-    spdlog::debug("kalman: [{}] outputs [{:.2f}]", m_id, fmt::join(m_ekf.X(), " "));
+    spdlog::debug("kalman: [{}]  outputs [{:.2f}]", m_id, fmt::join(m_ekf.X(), " "));
   }
 }
 

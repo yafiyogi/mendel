@@ -34,46 +34,47 @@
 #include "yy_maths/yy_ekf.hpp"
 
 #include "action.hpp"
+#include "values_metric_id.h"
 
 namespace yafiyogi::mendel::actions {
 namespace kalman_action_detail {
 
 struct OutputMapping
 {
-    constexpr bool operator<(const std::string & value) const noexcept
+    constexpr bool operator<(const values::MetricId & value) const noexcept
     {
       return var < value;
     }
 
-    constexpr bool operator==(const std::string & value) const noexcept
+    constexpr bool operator==(const values::MetricId & value) const noexcept
     {
       return var == value;
     }
 
-    std::string var{};
+    values::MetricId var{};
     size_type output_idx = 0;
 };
 
 struct InputMapping
 {
-    constexpr bool operator<(const std::string & value) const noexcept
+    constexpr bool operator<(const values::MetricId & value) const noexcept
     {
       return var < value;
     }
 
-    constexpr bool operator==(const std::string & value) const noexcept
+    constexpr bool operator==(const values::MetricId & value) const noexcept
     {
       return var == value;
     }
 
-    std::string var{};
+    values::MetricId var{};
     size_type input_idx = 0;
     size_type output_idx = 0;
 };
 
 } // namespace kalman_action_detail
 
-using KalmanOptions = yy_data::flat_map<std::string, std::string>;
+using KalmanOptions = yy_data::flat_map<values::MetricId, values::MetricId>;
 
 class KalmanAction final:
       public Action
@@ -82,7 +83,8 @@ class KalmanAction final:
     KalmanAction(std::string_view p_id,
                  std::string_view p_output_topic,
                  const KalmanOptions & p_options);
-    void Run(const values::Store & store) noexcept override;
+    void Run(const ParamVector & params,
+             const values::Store & store) noexcept override;
 
     constexpr const std::string & Id() const noexcept
     {
