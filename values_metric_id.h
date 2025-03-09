@@ -28,19 +28,14 @@
 
 #include <string>
 
-#include "values_labels.h"
-
 namespace yafiyogi::values {
 
 class MetricId final
 {
   public:
-    constexpr MetricId(std::string_view p_id,
-                       Labels && p_labels) noexcept:
-      m_id(p_id),
-      m_labels(std::move(p_labels))
-    {
-    }
+    explicit MetricId(std::string_view p_metric_id) noexcept;
+    MetricId(std::string_view p_id,
+             std::string_view p_location) noexcept;
 
     constexpr MetricId() noexcept = default;
     constexpr MetricId(const MetricId &) noexcept = default;
@@ -51,12 +46,12 @@ class MetricId final
 
     constexpr bool operator<(const MetricId & other) const noexcept
     {
-      return std::tie(m_id, m_labels) < std::tie(other.m_id, other.m_labels);
+      return std::tie(m_id, m_location) < std::tie(other.m_id, other.m_location);
     }
 
     constexpr bool operator==(const MetricId & other) const noexcept
     {
-      return std::tie(m_id, m_labels) == std::tie(other.m_id, other.m_labels);
+      return std::tie(m_id, m_location) == std::tie(other.m_id, other.m_location);
     }
 
     constexpr const std::string & Id() const noexcept
@@ -64,24 +59,24 @@ class MetricId final
       return m_id;
     }
 
-    constexpr values::Labels & Labels() noexcept
+    constexpr const std::string & Location() const noexcept
     {
-      return m_labels;
+      return m_location;
     }
 
-    constexpr const values::Labels & Labels() const noexcept
+    constexpr void Location(const std::string & p_location) noexcept
     {
-      return m_labels;
+      m_location = p_location;
     }
 
-    constexpr void Labels(const values::Labels & p_labels) noexcept
+    constexpr void Location(std::string && p_location) noexcept
     {
-      m_labels = p_labels;
+      m_location = std::move(p_location);
     }
 
   private:
     std::string m_id{};
-    values::Labels m_labels{};
+    std::string m_location{};
 };
 
 } // namespace yafiyogi::values

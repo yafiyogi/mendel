@@ -78,18 +78,15 @@ class Query final
     template<typename Visitor>
     [[nodiscard]]
     constexpr bool find(Visitor && p_visitor,
-                        const MetricId & p_metric_id,
-                        const std::string_view label) noexcept
+                        const MetricId & p_metric_id) noexcept
     {
       node_ptr node{find_string(node_ptr{m_nodes.data()},
                                 yy_quad::make_const_span(p_metric_id.Id()))};
 
       if(node)
       {
-        const auto & labels = p_metric_id.Labels();
-
         node = find_string(node,
-                           yy_quad::make_const_span(labels.get_label(label)));
+                           yy_quad::make_const_span(p_metric_id.Location()));
       }
 
       return visit(std::forward<Visitor>(p_visitor), node);

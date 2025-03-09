@@ -36,8 +36,8 @@ namespace yafiyogi::mendel::actions {
 class Store
 {
   public:
-    using action_obs_ptr = yy_data::observer_ptr<Action>;
-    using value_type = yy_quad::simple_vector<action_obs_ptr>;
+    using value_type = yy_quad::simple_vector<ActionObsPtr>;
+    using value_ptr = yy_data::observer_ptr<value_type>;
     using store_builder_type = values::metric_id_trie<value_type>;
     using store_type = store_builder_type::automaton_type;
     using actions_type = yy_quad::simple_vector<ActionPtr>;
@@ -54,10 +54,9 @@ class Store
     template<typename Visitor>
     [[nodiscard]]
     constexpr bool Find(Visitor && p_visitor,
-                        const values::MetricId & p_metric,
-                        std::string_view p_label) noexcept
+                        const values::MetricId & p_metric) noexcept
     {
-      return m_store.find(std::forward<Visitor>(p_visitor), p_metric, p_label);
+      return m_store.find(std::forward<Visitor>(p_visitor), p_metric);
     }
 
     template<typename Visitor>

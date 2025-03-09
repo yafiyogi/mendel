@@ -60,10 +60,9 @@ class Store final
     template<typename Visitor>
     [[nodiscard]]
     constexpr bool Find(Visitor && p_visitor,
-                        const values::MetricId & p_metric,
-                        std::string_view p_label) noexcept
+                        const values::MetricId & p_metric) noexcept
     {
-      return m_store.find(std::forward<Visitor>(p_visitor), p_metric, p_label);
+      return m_store.find(std::forward<Visitor>(p_visitor), p_metric);
     }
 
     template<typename Visitor>
