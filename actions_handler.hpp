@@ -26,10 +26,12 @@
 
 #pragma once
 
+#include <memory>
 #include <stop_token>
 
 #include "yy_cpp/yy_ring_buffer.h"
 
+#include "actions_handler_fwd.hpp"
 #include "actions_store.hpp"
 #include "values_store.hpp"
 
@@ -38,17 +40,19 @@ namespace yafiyogi::mendel {
 class ActionsHandler
 {
   public:
-    using actions_type = actions::Store::value_type;
-    using MessageQueue = yy_data::ring_buffer<actions_type, 32>;
+    using MessageQueue = yy_data::ring_buffer<values::MetricDataVector, 32>;
 
-    ActionsHandler(values::StorePtr p_values_store);
+    ActionsHandler(actions::StorePtr m_actions_store,
+                   values::StorePtr p_values_store);
     void Run(std::stop_token p_stop_token);
-    bool Write(actions_type & data);
+    bool QWrite(values::MetricDataVector & p_data);
 
   private:
-    values::StorePtr m_values_store_ptr{};
-    values::StoreObsPtr m_values_store{};
+    actions::StorePtr m_actions_store{};
+    values::StorePtr m_values_store{};
     MessageQueue m_queue{};
 };
+
+using ActionsHandlerPtr = std::shared_ptr<ActionsHandler>;
 
 } // namespace yafiyogi::mendel

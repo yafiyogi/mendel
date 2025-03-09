@@ -26,41 +26,126 @@
 
 #include "fmt/format.h"
 
+#include "action.hpp"
 #include "actions_handler.hpp"
+#include "values_metric_labels.hpp"
 
 namespace yafiyogi::mendel {
+namespace {
 
-ActionsHandler::ActionsHandler(values::StorePtr p_values_store):
-  m_values_store_ptr(std::move(p_values_store))
+class NullAction final:
+      public actions::Action
 {
-  m_values_store = m_values_store_ptr.get();
+  public:
+    void Run(const actions::ParamVector & /* params */,
+             const values::Store & /* store */) noexcept override
+    {
+    }
+};
+
+NullAction null_action;
+actions::ActionObsPtr g_null_action{&null_action};
+
+
+constexpr size_type spin_max = 400;
+
+struct ActionValue final
+{
+    bool operator<(const actions::ActionObsPtr & p_action) const noexcept
+    {
+      return action < p_action;
+    }
+
+    bool operator==(const actions::ActionObsPtr & p_action) const noexcept
+    {
+      return action == p_action;
+    }
+
+    void Run(const values::Store & p_value_store)
+    {
+      action->Run(values, p_value_store);
+    }
+
+    actions::ActionObsPtr action = g_null_action;
+    actions::ParamVector values{};
+};
+
+using ActionValueVector = yy_quad::simple_vector<ActionValue>;
+
+
+} // anonymous namespace
+
+ActionsHandler::ActionsHandler(actions::StorePtr p_actions_store,
+                               values::StorePtr p_values_store):
+  m_actions_store(std::move(p_actions_store)),
+  m_values_store(std::move(p_values_store))
+{
 }
 
 void ActionsHandler::Run(std::stop_token p_stop_token)
 {
-  actions_type l_actions;
+  values::MetricDataVector l_data_in;
 
+  actions::Store & l_actions_store = *m_actions_store;
   values::Store & l_values_store = *m_values_store;
 
+  size_type spin = 1; // Set to 1 to prevent spinning at startup.
   while(!p_stop_token.stop_requested())
   {
-    while(m_queue.swap_out(l_actions))
+    while(m_queue.swap_out(l_data_in))
     {
-      for(auto & action : l_actions)
+      spin = spin_max; // Reset spin count.
+
+      ActionValueVector l_actions{};
+      for(auto & data : l_data_in)
       {
-        action->Run(l_values_store);
+        auto add_actions_n_data = [&data, &l_actions](actions::Store::value_ptr actions) {
+          for(auto action : *actions)
+          {
+            auto [action_iter, action_found] = yy_data::find_iter(l_actions, action);
+            if(!action_found)
+            {
+              auto [iter, _] = l_actions.emplace(action_iter, action, actions::ParamVector{});
+              action_iter = std::move(iter);
+            }
+
+            auto & values = action_iter->values;
+
+            values::MetricDataObsPtr data_ptr{&data};
+            if(auto [data_iter, data_found] = yy_data::find_iter(values, data_ptr);
+               !data_found)
+            {
+              values.emplace(data_iter, data_ptr);
+            }
+          }
+       };
+
+        std::ignore = l_actions_store.Find(add_actions_n_data, data.Id());
       }
 
+      for(auto & action : l_actions)
+      {
+        action.Run(l_values_store);
+      }
       l_actions.clear(yy_data::ClearAction::Keep);
     }
 
-    m_queue.wait(p_stop_token, [this] { return !m_queue.empty();});
+    if(0 == --spin)
+    {
+      spin = spin_max; // Reset spin count.
+      m_queue.wait(p_stop_token, [this] { return !m_queue.empty();});
+    }
   }
 }
 
-bool ActionsHandler::Write(actions_type & data)
+bool ActionsHandler::QWrite(values::MetricDataVector & p_data)
 {
-  return m_queue.swap_in(data);
+  if(p_data.empty())
+  {
+    return true;
+  }
+
+  return m_queue.swap_in(p_data);
 }
 
 } // namespace yafiyogi::mendel
