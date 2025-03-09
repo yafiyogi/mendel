@@ -160,13 +160,13 @@ int main(int argc, char* argv[])
   if(!no_run)
   {
 
-    auto actions_handler{std::make_shared<mendel::ActionsHandler>(values_store)};
+    auto actions_handler{std::make_shared<mendel::ActionsHandler>(std::move(actions_store),
+                                                                  values_store)};
     std::jthread actions_thread{[&actions_handler](std::stop_token p_stop_token) {
       actions_handler->Run(p_stop_token);
     }};
 
     auto cache_handler{std::make_shared<mendel::CacheHandler>(actions_handler,
-                                                              std::move(actions_store),
                                                               values_store)};
     std::jthread cache_thread{[&cache_handler](std::stop_token p_stop_token) {
       cache_handler->Run(p_stop_token);
