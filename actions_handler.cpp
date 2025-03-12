@@ -24,6 +24,8 @@
 
 */
 
+#include <chrono>
+
 #include "fmt/format.h"
 
 #include "action.hpp"
@@ -38,7 +40,8 @@ class NullAction final:
 {
   public:
     void Run(const actions::ParamVector & /* params */,
-             const values::Store & /* store */) noexcept override
+             values::Store & /* store */,
+             int64_t /* timestamp */) noexcept override
     {
     }
 };
@@ -61,9 +64,10 @@ struct ActionValue final
       return action == p_action;
     }
 
-    void Run(const values::Store & p_value_store)
+    void Run(values::Store & p_value_store,
+             int64_t timestamp)
     {
-      action->Run(values, p_value_store);
+      action->Run(values, p_value_store, timestamp);
     }
 
     actions::ActionObsPtr action = g_null_action;
@@ -123,9 +127,10 @@ void ActionsHandler::Run(std::stop_token p_stop_token)
         std::ignore = l_actions_store.Find(add_actions_n_data, data.Id());
       }
 
+      int64_t ts = std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::utc_clock::now()).time_since_epoch().count();
       for(auto & action : l_actions)
       {
-        action.Run(l_values_store);
+        action.Run(l_values_store, ts);
       }
       l_actions.clear(yy_data::ClearAction::Keep);
     }
