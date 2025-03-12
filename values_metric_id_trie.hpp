@@ -30,6 +30,7 @@
 #include <string_view>
 
 #include "yy_cpp/yy_fm_flat_trie_ptr.h"
+#include "yy_cpp/yy_observer_ptr.hpp"
 #include "yy_cpp/yy_span.h"
 #include "yy_cpp/yy_tokenizer.h"
 
@@ -59,6 +60,7 @@ class Query final
     using data_vector = typename traits::data_vector;
 
     using value_type = typename traits::value_type;
+    using value_ptr = yy_data::observer_ptr<value_type>;
 
     constexpr explicit Query(trie_vector && p_nodes,
                              data_vector && p_data) noexcept:
@@ -116,7 +118,7 @@ class Query final
       bool has_payload = node && !node->empty();
       if(has_payload)
       {
-        visitor(node->data());
+        visitor(value_ptr(node->data()));
       }
 
       return has_payload;
@@ -129,7 +131,7 @@ class Query final
       bool has_payload = node && !node->empty();
       if(has_payload)
       {
-        visitor(node->data());
+        visitor(value_ptr(node->data()));
       }
 
       return has_payload;
