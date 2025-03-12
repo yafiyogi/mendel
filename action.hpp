@@ -57,7 +57,8 @@ class Action
     constexpr Action & operator=(Action &&) noexcept = default;
 
     virtual void Run(const ParamVector & params,
-                     const values::Store & store) noexcept = 0;
+                     values::Store & store,
+                     int64_t timestamp) noexcept = 0;
 };
 
 using ActionPtr = std::unique_ptr<Action>;
