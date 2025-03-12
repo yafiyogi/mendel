@@ -53,6 +53,7 @@ enum class ActionType:uint8_t
 };
 
 using Inputs = yy_quad::simple_vector<std::string>;
+using Outputs = yy_quad::simple_vector<std::string>;
 
 constexpr auto handler_types =
   yy_data::make_lookup<std::string_view, ActionType>(ActionType::None,
@@ -82,6 +83,7 @@ void configure_kalman(const YAML::Node & yaml_kalman,
 
     Inputs inputs{};
     inputs.reserve(yaml_values.size());
+    Outputs outputs{};
 
     for(const auto & yaml_value : yaml_values)
     {
@@ -90,8 +92,9 @@ void configure_kalman(const YAML::Node & yaml_kalman,
 
       if(!input.empty() && !output.empty())
       {
-        options.emplace(values::MetricId{input}, values::MetricId{output});
+        options.emplace(values::MetricId{input}, std::string{output});
         inputs.emplace_back(std::string{input});
+        outputs.emplace_back(std::string{output});
       }
     }
 
@@ -101,18 +104,29 @@ void configure_kalman(const YAML::Node & yaml_kalman,
       spdlog::info("  Configuring Kalman Filter [{}]."sv,
                    action_id);
 
-      auto output_topic{yy_util::yaml_get_value<std::string_view>(yaml_kalman["output_topic"sv])};
-
-      actions::ActionPtr action{std::make_unique<actions::KalmanAction>(action_id,
-                                                                        output_topic,
-                                                                        std::move(options))};
-
-      for(auto & input : inputs)
+      if(auto yaml_output = yaml_kalman["output"sv];
+         yaml_output)
       {
-        values_builder.Add(input);
-      }
+        auto output_topic{yy_util::yaml_get_value<std::string_view>(yaml_output["topic"sv])};
+        auto output_value_id{yy_util::yaml_get_value<std::string_view>(yaml_output["value_id"sv])};
 
-      actions_builder.Add(std::move(action), inputs);
+        actions::ActionPtr action{std::make_unique<actions::KalmanAction>(action_id,
+                                                                          output_topic,
+                                                                          output_value_id,
+                                                                          std::move(options))};
+
+        for(auto & input : inputs)
+        {
+          values_builder.Add(input);
+        }
+
+        for(auto & output : outputs)
+        {
+          values_builder.Add(fmt::format("{}:{}"sv, output_value_id, output));
+        }
+
+        actions_builder.Add(std::move(action), inputs);
+      }
     }
   }
 }
