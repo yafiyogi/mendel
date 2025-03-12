@@ -29,6 +29,8 @@
 
 #include "spdlog/spdlog.h"
 
+#include "yy_cpp/yy_clear_action.h"
+
 #include "values_metric_id_fmt.hpp"
 
 #include "label_action.h"
