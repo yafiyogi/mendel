@@ -41,17 +41,18 @@ namespace kalman_action_detail {
 
 struct OutputMapping
 {
-    constexpr bool operator<(const values::MetricId & value) const noexcept
+    constexpr bool operator<(const std::string & value) const noexcept
     {
-      return var < value;
+      return property < value;
     }
 
-    constexpr bool operator==(const values::MetricId & value) const noexcept
+    constexpr bool operator==(const std::string & value) const noexcept
     {
-      return var == value;
+      return property == value;
     }
 
-    values::MetricId var{};
+    std::string property{};
+    values::MetricId value_id{};
     size_type output_idx = 0;
 };
 
@@ -59,22 +60,22 @@ struct InputMapping
 {
     constexpr bool operator<(const values::MetricId & value) const noexcept
     {
-      return var < value;
+      return value_id < value;
     }
 
     constexpr bool operator==(const values::MetricId & value) const noexcept
     {
-      return var == value;
+      return value_id == value;
     }
 
-    values::MetricId var{};
+    values::MetricId value_id{};
     size_type input_idx = 0;
     size_type output_idx = 0;
 };
 
 } // namespace kalman_action_detail
 
-using KalmanOptions = yy_data::flat_map<values::MetricId, values::MetricId>;
+using KalmanOptions = yy_data::flat_map<values::MetricId, std::string>;
 
 class KalmanAction final:
       public Action
@@ -82,9 +83,11 @@ class KalmanAction final:
   public:
     KalmanAction(std::string_view p_id,
                  std::string_view p_output_topic,
+                 std::string_view p_output_value_id,
                  const KalmanOptions & p_options);
     void Run(const ParamVector & params,
-             const values::Store & store) noexcept override;
+             values::Store & store,
+             int64_t timestamp) noexcept override;
 
     constexpr const std::string & Id() const noexcept
     {
@@ -111,8 +114,9 @@ class KalmanAction final:
     OutputMap m_outputs{};
 
     using InputMap = yy_quad::simple_vector<kalman_action_detail::InputMapping>;
-
     InputMap m_inputs{};
+
+    std::string m_json{};
 };
 
 } // namespace yafiyogi::mendel::actions

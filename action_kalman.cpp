@@ -26,6 +26,8 @@
 
 #include <charconv>
 
+#include "fmt/format.h"
+#include "fmt/compile.h"
 #include "spdlog/spdlog.h"
 
 #include "yy_cpp/yy_find_iter_util.hpp"
@@ -37,21 +39,46 @@
 
 namespace yafiyogi::mendel::actions {
 
+using namespace std::string_view_literals;
+using namespace fmt::literals;
+
+namespace {
+
+// json format
+// {
+//   "<property>":<float>,
+//   ...
+// }
+
+constexpr auto g_json_property_format{"\"{}\":{:.2f},"_cf};
+constexpr auto g_timestamp_format{"\"utc_micros\":{}}}"_cf};
+constexpr auto g_ouput_value_id{"{}:{}"_cf};
+}
+
 KalmanAction::KalmanAction(std::string_view p_id,
                            std::string_view p_output_topic,
+                           std::string_view p_output_value_id,
                            const KalmanOptions & p_options):
   m_id(std::move(p_id)),
   m_output_topic(std::move(p_output_topic))
 {
+  auto calc_output_value_id = [&p_output_value_id](auto property) -> values::MetricId {
+    return values::MetricId(fmt::format(g_ouput_value_id, p_output_value_id, property));
+  };
   // Initialise outputs.
   size_type idx_n = 0;
-  p_options.visit([&idx_n, this](auto & /* input_id */, const auto & output_id) {
+  p_options.visit([&idx_n, &calc_output_value_id, this](auto & /* input_id */, const auto & output_id) {
     if(auto output{yy_data::find_iter(m_outputs, output_id)};
        !output.found)
     {
-      spdlog::debug("   output: [{}]", output_id);
+      auto [iter, _] = m_outputs.emplace(output.iter,
+                                         output_id,
+                                         calc_output_value_id(output_id),
+                                         idx_n);
+      spdlog::debug("   output: [{}] value_id:[{}]"sv,
+                    iter->property,
+                    iter->value_id);
 
-      m_outputs.emplace(output.iter, output_id, idx_n);
       ++idx_n;
     }
   });
@@ -68,9 +95,9 @@ KalmanAction::KalmanAction(std::string_view p_id,
       if(auto [output, output_found] = yy_data::find_iter(m_outputs, output_id);
          output_found)
       {
-        spdlog::debug("   input: [{}] out=[{}]",
+        spdlog::debug("   input: [{}] out=[{}]"sv,
                       input_id,
-                      output->var);
+                      output->property);
 
         m_inputs.emplace(input.iter, input_id, idx_m, output->output_idx);
         ++idx_m;
@@ -88,8 +115,10 @@ KalmanAction::KalmanAction(std::string_view p_id,
   m_observations.resize(m);
 }
 
+
 void KalmanAction::Run(const ParamVector & p_params,
-                       const values::Store & /* values_store */) noexcept
+                       values::Store & values_store,
+                       int64_t timestamp) noexcept
 {
   // Zero mapping sensor-function Jacobian matrix h.
   m_h = zero_matrix{m_ekf.M(), m_ekf.N()};
@@ -104,12 +133,19 @@ void KalmanAction::Run(const ParamVector & p_params,
     if(auto [input, found] = yy_data::find_iter(m_inputs, param->Id());
        found)
     {
-      auto & [var, input_idx, output_idx] = *input;
+      auto & [input_value_id, input_idx, output_idx] = *input;
 
-      auto set_observation = [&var, input_idx, this](double value) {
-        spdlog::debug("kalman: [{}] [{}]=[{:.2f}]", m_id, var, value);
+      auto set_observation = [&input_value_id, input_idx, this](double value) {
+        spdlog::debug("kalman: [{}] [{}]=[{:.2f}]"sv, m_id, input_value_id, value);
         m_observations(input_idx) = value;
       };
+
+      auto & data_str = param->Value();
+      auto dot_pos = data_str.find_first_of(".");
+      if(std::string::npos == dot_pos)
+      {
+        dot_pos = data_str.size();
+      }
 
       std::visit(set_observation, param->Binary());
 
@@ -121,12 +157,33 @@ void KalmanAction::Run(const ParamVector & p_params,
 
   if(do_calc)
   {
-    spdlog::debug("kalman: [{}] previous [{:.2f}]", m_id, fmt::join(m_ekf.X(), " "));
+    spdlog::debug("kalman: [{}] previous [{:.2f}]"sv, m_id, fmt::join(m_ekf.X(), " "));
     m_ekf.predict();
 
-    spdlog::debug("kalman: [{}]   inputs [{:.2f}]", m_id, fmt::join(m_observations, " "));
+    spdlog::debug("kalman: [{}]   inputs [{:.2f}]"sv, m_id, fmt::join(m_observations, " "));
     m_ekf.update(m_observations, m_h, m_hx);
-    spdlog::debug("kalman: [{}]  outputs [{:.2f}]", m_id, fmt::join(m_ekf.X(), " "));
+    spdlog::debug("kalman: [{}]  outputs [{:.2f}]"sv, m_id, fmt::join(m_ekf.X(), " "));
+
+    m_json = "{"sv;
+    for(auto & output : m_outputs)
+    {
+      auto ekf_Xn = m_ekf.X(output.output_idx);
+
+      auto add_value_to_store = [&ekf_Xn](auto p_value) {
+        p_value->store(ekf_Xn, std::memory_order_release);
+      };
+
+      std::ignore = values_store.Find(add_value_to_store, output.value_id);
+
+      fmt::format_to(std::back_inserter(m_json),
+                     g_json_property_format,
+                     output.property,
+                     ekf_Xn);
+
+    }
+    fmt::format_to(std::back_inserter(m_json), g_timestamp_format, timestamp);
+
+    spdlog::debug("kalman: [{}] json=[{}]"sv, m_id, m_json);
   }
 }
 
