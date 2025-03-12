@@ -74,7 +74,6 @@ class Store final
     }
 
   private:
-
     store_type m_store{};
 };
 
