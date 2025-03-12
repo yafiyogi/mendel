@@ -140,7 +140,7 @@ int main(int argc, char* argv[])
   auto mqtt_config{mendel::configure_mqtt(yaml_mqtt,
                                           values_config)};
 
-  spdlog::info("Configure actions:");
+  spdlog::info("Configure actions:"sv);
   mendel::actions::StorePtr actions_store{};
   values::StorePtr values_store{};
   {
@@ -155,7 +155,7 @@ int main(int argc, char* argv[])
     values_store = values_builder.Create();
   }
 
-  spdlog::info("Mendel ready.");
+  spdlog::info("Mendel ready."sv);
 
   if(!no_run)
   {

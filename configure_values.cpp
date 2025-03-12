@@ -208,7 +208,7 @@ ValueActions configure_value_actions(const YAML::Node & yaml_value_actions)
                     default_value = yy_util::yaml_get_optional_value<std::string>(yaml_default);
                     if(default_value.has_value())
                     {
-                      spdlog::info("         - default: [{}]", default_value.value());
+                      spdlog::info("         - default: [{}]"sv, default_value.value());
                     }
                   }
                 }
@@ -222,7 +222,7 @@ ValueActions configure_value_actions(const YAML::Node & yaml_value_actions)
                     auto input{yy_util::yaml_get_value<std::string_view>(yaml_input)};
                     auto output{yy_util::yaml_get_value<std::string_view>(yaml_output)};
 
-                    spdlog::info("         - input: [{}] output: [{}]", input, output);
+                    spdlog::info("         - input: [{}] output: [{}]"sv, input, output);
                     switch_values.emplace(std::string{input},
                                           std::string{output});
                   }
@@ -241,7 +241,6 @@ ValueActions configure_value_actions(const YAML::Node & yaml_value_actions)
         break;
 
         default:
-          spdlog::debug("configure_value_actions(): 4c");
           spdlog::warn("Unrecognized action [{}]"sv, action_name);
           spdlog::trace("  [line {}]."sv, yaml_value_action.Mark().line + 1);
           break;
