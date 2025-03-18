@@ -91,7 +91,7 @@ LabelActions configure_label_actions(const YAML::Node & yaml_label_actions)
       auto action_name{yy_util::to_lower(yy_util::trim(yy_util::yaml_get_value<std::string_view>(yaml_label_action["action"sv])))};
       LabelActionPtr action;
 
-      spdlog::info("       - action [{}]."sv, action_name);
+      spdlog::info("       - label action [{}]."sv, action_name);
       spdlog::trace("          [line {}]."sv, yaml_label_action.Mark().line + 1);
       switch(g_label_action_types.lookup(action_name))
       {
@@ -172,7 +172,7 @@ ValueActions configure_value_actions(const YAML::Node & yaml_value_actions)
       auto action_name{yy_util::to_lower(yy_util::trim(yy_util::yaml_get_value<std::string_view>(yaml_value_action["action"sv])))};
       ValueActionPtr action;
 
-      spdlog::info("       - action [{}]."sv, action_name);
+      spdlog::info("       - value action [{}]."sv, action_name);
       spdlog::trace("          [line {}]."sv, yaml_value_action.Mark().line + 1);
       switch(g_value_action_types.lookup(action_name, ValueActionType::Keep))
       {
@@ -183,59 +183,57 @@ ValueActions configure_value_actions(const YAML::Node & yaml_value_actions)
 
         case ValueActionType::Switch:
         {
-          auto & yaml_values = yaml_value_action["values"sv];
+          std::optional<std::string> default_value{std::nullopt};
 
-          if(yaml_values)
+          if(auto & yaml_default = yaml_value_action["default"sv];
+             yaml_default)
           {
-            std::optional<std::string> default_value{std::nullopt};
-            SwitchValueAction::Switch switch_values;
-
-            if(auto num_cases = yaml_values.size();
-               num_cases > 1)
+            default_value = yy_util::yaml_get_optional_value<std::string>(yaml_default);
+            if(default_value.has_value())
             {
-              switch_values.reserve(num_cases - 1);
+              spdlog::info("         - default: [{}]"sv, default_value.value());
             }
+          }
 
-            for(auto & yaml_case : yaml_values)
+          SwitchValueAction::Switch switch_values;
+          auto & yaml_mappings = yaml_value_action["mappings"sv];
+
+          if(auto num_cases = yaml_values.size();
+             num_cases > 1)
+          {
+            switch_values.reserve(num_cases - 1);
+          }
+
+          for(auto & yaml_case : yaml_mappings)
+          {
+            if(auto & yaml_input = yaml_case.first;
+               yaml_input)
             {
-              if(!yy_util::yaml_is_scalar(yaml_case))
+              if(auto & yaml_output = yaml_case.second;
+                 yaml_output)
               {
-                if(!default_value.has_value())
-                {
-                  if(auto & yaml_default = yaml_case["default"sv];
-                     yaml_default)
-                  {
-                    default_value = yy_util::yaml_get_optional_value<std::string>(yaml_default);
-                    if(default_value.has_value())
-                    {
-                      spdlog::info("         - default: [{}]"sv, default_value.value());
-                    }
-                  }
-                }
+                auto input{yy_util::yaml_get_value<std::string_view>(yaml_input)};
+                auto output{yy_util::yaml_get_value<std::string_view>(yaml_output)};
 
-                if(auto & yaml_input = yaml_case["input"sv];
-                   yaml_input)
-                {
-                  if(auto & yaml_output = yaml_case["output"sv];
-                     yaml_output)
-                  {
-                    auto input{yy_util::yaml_get_value<std::string_view>(yaml_input)};
-                    auto output{yy_util::yaml_get_value<std::string_view>(yaml_output)};
-
-                    spdlog::info("         - input: [{}] output: [{}]"sv, input, output);
-                    switch_values.emplace(std::string{input},
-                                          std::string{output});
-                  }
-                }
+                spdlog::info("         - input: [{}] output: [{}]", input, output);
+                switch_values.emplace(std::string{input},
+                                      std::string{output});
               }
             }
+          }
 
-            if(default_value.has_value()
-               && !switch_values.empty())
-            {
-              action = yy_util::static_unique_cast<ValueAction>(std::make_unique<SwitchValueAction>(std::move(default_value.value()),
-                                                                                                    std::move(switch_values)));
-            }
+          if(default_value.has_value()
+             && !switch_values.empty())
+          {
+            action = yy_util::static_unique_cast<ValueAction>(std::make_unique<SwitchValueAction>(std::move(default_value.value()),
+                                                                                                  std::move(switch_values)));
+          }
+          else
+          {
+            spdlog::warn(" Value action [{}] not created default {}present, values {}present.",
+                         action_name,
+                         (default_value.has_value() ? ""sv : "not "sv),
+                         (switch_values.empty() ? "not "sv : ""sv) );
           }
         }
         break;
