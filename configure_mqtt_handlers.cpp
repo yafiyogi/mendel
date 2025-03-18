@@ -115,7 +115,7 @@ MqttHandlerPtr configure_json_handler(std::string_view p_id,
         if(is_sequence && yaml_property.IsScalar())
         {
           property = yy_util::trim(yaml_property.as<std::string_view>());
-          json_pointer = fmt::format("/{}"_cf, property);
+          json_pointer = fmt::format("{}"_cf, property);
         }
         else if(!is_sequence)
         {
