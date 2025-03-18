@@ -108,11 +108,8 @@ KalmanAction::KalmanAction(std::string_view p_id,
   // Compact inputs.
   InputMap{m_inputs}.swap(m_inputs);
 
-  const size_type m = m_inputs.size();
-  const size_type n = m_outputs.size();
-
-  m_ekf = yy_maths::ekf{m, n};
-  m_observations.resize(m);
+  m_ekf = yy_maths::ekf{m_inputs.size(), m_outputs.size()};
+  m_observations.resize(m_ekf.M());
 }
 
 
