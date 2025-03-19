@@ -198,7 +198,7 @@ ValueActions configure_value_actions(const YAML::Node & yaml_value_actions)
           SwitchValueAction::Switch switch_values;
           auto & yaml_mappings = yaml_value_action["mappings"sv];
 
-          if(auto num_cases = yaml_values.size();
+          if(auto num_cases = yaml_mappings.size();
              num_cases > 1)
           {
             switch_values.reserve(num_cases - 1);
