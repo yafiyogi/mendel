@@ -80,9 +80,11 @@ using ActionValueVector = yy_quad::simple_vector<ActionValue>;
 } // anonymous namespace
 
 ActionsHandler::ActionsHandler(actions::StorePtr p_actions_store,
-                               values::StorePtr p_values_store):
+                               values::StorePtr p_values_store,
+                               values::MetricDataQueueReader && p_queue):
   m_actions_store(std::move(p_actions_store)),
-  m_values_store(std::move(p_values_store))
+  m_values_store(std::move(p_values_store)),
+  m_queue(std::move(p_queue))
 {
 }
 
@@ -96,7 +98,7 @@ void ActionsHandler::Run(std::stop_token p_stop_token)
   size_type spin = 1; // Set to 1 to prevent spinning at startup.
   while(!p_stop_token.stop_requested())
   {
-    while(m_queue.swap_out(l_data_in))
+    while(m_queue.QSwapOut(l_data_in))
     {
       spin = spin_max; // Reset spin count.
 
@@ -138,19 +140,9 @@ void ActionsHandler::Run(std::stop_token p_stop_token)
     if(0 == --spin)
     {
       spin = spin_max; // Reset spin count.
-      m_queue.wait(p_stop_token, [this] { return !m_queue.empty();});
+      m_queue.QWait(p_stop_token, [this] { return !m_queue.QEmpty();});
     }
   }
-}
-
-bool ActionsHandler::QWrite(values::MetricDataVector & p_data)
-{
-  if(p_data.empty())
-  {
-    return true;
-  }
-
-  return m_queue.swap_in(p_data);
 }
 
 } // namespace yafiyogi::mendel

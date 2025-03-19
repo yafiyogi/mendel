@@ -33,6 +33,7 @@
 
 #include "actions_handler_fwd.hpp"
 #include "actions_store.hpp"
+#include "values_metric_data_queue.hpp"
 #include "values_store.hpp"
 
 namespace yafiyogi::mendel {
@@ -40,17 +41,15 @@ namespace yafiyogi::mendel {
 class ActionsHandler
 {
   public:
-    using MessageQueue = yy_data::ring_buffer<values::MetricDataVector, 32>;
-
     ActionsHandler(actions::StorePtr m_actions_store,
-                   values::StorePtr p_values_store);
+                   values::StorePtr p_values_store,
+                   values::MetricDataQueueReader && p_queue);
     void Run(std::stop_token p_stop_token);
-    bool QWrite(values::MetricDataVector & p_data);
 
   private:
     actions::StorePtr m_actions_store{};
     values::StorePtr m_values_store{};
-    MessageQueue m_queue{};
+    values::MetricDataQueueReader m_queue{};
 };
 
 using ActionsHandlerPtr = std::shared_ptr<ActionsHandler>;

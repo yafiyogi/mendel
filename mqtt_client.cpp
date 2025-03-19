@@ -46,17 +46,15 @@ namespace yafiyogi::mendel {
 using namespace std::string_view_literals;
 
 mqtt_client::mqtt_client(mqtt_config & p_config,
-                         CacheHandlerPtr p_cache_handler):
+                         values::MetricDataQueueWriter && p_cache_queue):
   mosqpp::mosquittopp(),
   m_topics(std::move(p_config.topics)),
   m_subscriptions(std::move(p_config.subscriptions)),
   m_id(std::move(p_config.id)),
   m_host(std::move(p_config.host)),
   m_port(p_config.port),
-  m_cache_handler_ptr(std::move(p_cache_handler)),
-  m_cache_handler()
+  m_cache_queue(std::move(p_cache_queue))
 {
-  m_cache_handler = m_cache_handler_ptr.get();
   int mqtt_version = MQTT_PROTOCOL_V5;
   mosqpp::mosquittopp::opts_set(MOSQ_OPT_PROTOCOL_VERSION, &mqtt_version);
 
@@ -151,7 +149,7 @@ void mqtt_client::on_message(const struct mosquitto_message * message)
       }
     }
 
-    m_cache_handler->QWrite(m_metric_data);
+    m_cache_queue.QSwapIn(m_metric_data);
   }
 }
 

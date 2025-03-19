@@ -54,7 +54,7 @@ class mqtt_client final:
 {
   public:
     explicit mqtt_client(mqtt_config & config,
-                         CacheHandlerPtr p_cache_handler);
+                         values::MetricDataQueueWriter && p_cache_queue);
 
     mqtt_client() = delete;
     mqtt_client(const mqtt_client &) = delete;
@@ -88,9 +88,8 @@ class mqtt_client final:
     int m_port = yy_mqtt::mqtt_default_port;
     std::atomic<bool> m_is_connected = false;
     yy_mqtt::TopicLevelsView m_path{};
-    CacheHandlerPtr m_cache_handler_ptr{};
-    yy_data::observer_ptr<CacheHandler> m_cache_handler{};
     values::MetricDataVector m_metric_data{};
+    values::MetricDataQueueWriter m_cache_queue{};
 };
 
 } // namespace yafiyogi::mendel

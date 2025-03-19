@@ -36,26 +36,26 @@
 #include "values_store.hpp"
 
 #include "values_metric_data.h"
+#include "values_metric_data_queue.hpp"
 
 namespace yafiyogi::mendel {
 
 class CacheHandler
 {
   public:
-    using MessageQueue = yy_data::ring_buffer<values::MetricDataVector, 32>;
-    CacheHandler(ActionsHandlerPtr p_actions_handler,
-                 values::StorePtr p_values_store);
+    CacheHandler(values::StorePtr p_values_store,
+                 values::MetricDataQueueReader && p_cache_queue,
+                 values::MetricDataQueueWriter && p_action_queue);
 
     void Run(std::stop_token p_stop_token);
-    bool QWrite(values::MetricDataVector & p_data);
 
   private:
     using value_type = values::Store::value_type;
     using value_ptr = values::Store::value_ptr;
 
-    ActionsHandlerPtr m_actions_handler{};
     values::StorePtr m_values_store{};
-    MessageQueue m_queue{};
+    values::MetricDataQueueReader m_cache_queue;
+    values::MetricDataQueueWriter m_action_queue;
 };
 
 } // namespace yafiyogi::mendel

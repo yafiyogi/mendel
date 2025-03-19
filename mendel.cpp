@@ -159,22 +159,26 @@ int main(int argc, char* argv[])
 
   if(!no_run)
   {
-
+    auto action_queue = std::make_shared<values::MetricDataQueue>();
     auto actions_handler{std::make_shared<mendel::ActionsHandler>(std::move(actions_store),
-                                                                  values_store)};
+                                                                  values_store,
+                                                                  values::MetricDataQueueReader{action_queue})};
     std::jthread actions_thread{[&actions_handler](std::stop_token p_stop_token) {
       actions_handler->Run(p_stop_token);
     }};
 
-    auto cache_handler{std::make_shared<mendel::CacheHandler>(actions_handler,
-                                                              values_store)};
+    auto cache_queue = std::make_shared<values::MetricDataQueue>();
+    auto cache_handler{std::make_shared<mendel::CacheHandler>(values_store,
+                                                              values::MetricDataQueueReader{cache_queue},
+                                                              values::MetricDataQueueWriter{action_queue})};
     std::jthread cache_thread{[&cache_handler](std::stop_token p_stop_token) {
       cache_handler->Run(p_stop_token);
     }};
 
     mosqpp::lib_init();
 
-    auto client = std::make_unique<mendel::mqtt_client>(mqtt_config, cache_handler);
+    auto client = std::make_unique<mendel::mqtt_client>(mqtt_config,
+                                                        values::MetricDataQueueWriter{cache_queue});
 
     client->connect();
     try

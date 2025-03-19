@@ -42,16 +42,17 @@ constexpr size_type spin_max = 400;
 
 } // anonymous namespace
 
-CacheHandler::CacheHandler(ActionsHandlerPtr p_actions_handler,
-                           values::StorePtr p_values_store):
-  m_actions_handler(std::move(p_actions_handler)),
-  m_values_store(std::move(p_values_store))
+CacheHandler::CacheHandler(values::StorePtr p_values_store,
+                           values::MetricDataQueueReader && p_cache_queue,
+                           values::MetricDataQueueWriter && p_action_queue):
+  m_values_store(std::move(p_values_store)),
+  m_cache_queue(std::move(p_cache_queue)),
+  m_action_queue(std::move(p_action_queue))
 {
 }
 
 void CacheHandler::Run(std::stop_token p_stop_token)
 {
-  auto & l_actions_handler = *m_actions_handler;
   values::Store & l_values_store = *m_values_store;
 
   values::MetricDataVector l_data_in;
@@ -60,7 +61,7 @@ void CacheHandler::Run(std::stop_token p_stop_token)
   size_type spin = 1; // Set to 1 to prevent spinning at startup.
   while(!p_stop_token.stop_requested())
   {
-    while(m_queue.swap_out(l_data_in))
+    while(m_cache_queue.QSwapOut(l_data_in))
     {
       spin = spin_max; // Reset spin count.
 
@@ -94,27 +95,16 @@ void CacheHandler::Run(std::stop_token p_stop_token)
 
       if(send_data && !l_data_out.empty())
       {
-        l_actions_handler.QWrite(l_data_out);
+        m_action_queue.QSwapIn(l_data_out);
       }
     }
 
     if(0 == --spin)
     {
       spin = spin_max; // Reset spin count.
-      m_queue.wait(p_stop_token, [this] { return !m_queue.empty();});
+      m_cache_queue.QWait(p_stop_token, [this] { return !m_cache_queue.QEmpty();});
     }
   }
-}
-
-
-bool CacheHandler::QWrite(values::MetricDataVector & p_data)
-{
-  if(p_data.empty())
-  {
-    return true;
-  }
-
-  return m_queue.swap_in(p_data);
 }
 
 } // namespace yafiyogi::mendel
