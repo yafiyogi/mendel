@@ -38,6 +38,7 @@
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/daily_file_sink.h"
 
+#include "yy_cpp/yy_lockable_value.h"
 #include "yy_cpp/yy_locale.h"
 #include "yy_cpp/yy_yaml_util.h"
 
@@ -51,18 +52,43 @@
 #include "mqtt_client.h"
 #include "mqtt_handler.h"
 
+namespace yafiyogi {
 namespace {
 
-static std::atomic<bool> exit_program{false};
+using ClientPtr = std::shared_ptr<mendel::mqtt_client>;
+
+struct MendelState
+{
+    ClientPtr client{};
+    bool exit_program = false;
+};
+
+using LockableMendelState = yy_util::lockable_value<MendelState, std::mutex>;
+using LockMendelState =
+  yy_util::lock_type<LockableMendelState,
+                     std::unique_lock<LockableMendelState::mutex_type>>;
+
+LockableMendelState g_mendel_state;
+
+auto do_exit_program = [](auto & p_mendel_state) {
+  p_mendel_state.exit_program = true;
+
+  if(p_mendel_state.client)
+  {
+    p_mendel_state.client->stop();
+  }
+};
 
 void signal_handler(int /* signal */)
 {
   std::signal(SIGINT, SIG_DFL);
   std::signal(SIGTERM, SIG_DFL);
-  exit_program = true;
+
+  LockMendelState::visit(g_mendel_state, do_exit_program);
 }
 
-}
+} // anonymous namespace
+} // namespace yafiyogi
 
 namespace bpo = boost::program_options;
 
@@ -177,39 +203,32 @@ int main(int argc, char* argv[])
 
     mosqpp::lib_init();
 
-    auto client = std::make_unique<mendel::mqtt_client>(mqtt_config,
+    ClientPtr client;
+    auto do_create_client = [&client, &mqtt_config, &cache_queue](auto & p_mendel_state) {
+      if(!p_mendel_state.exit_program)
+      {
+        client =  std::make_unique<mendel::mqtt_client>(mqtt_config,
                                                         values::MetricDataQueueWriter{cache_queue});
 
-    client->connect();
-    try
-    {
-      while(!exit_program)
-      {
-        if(auto rc = client->loop();
-           rc)
-        {
-          std::this_thread::sleep_for(std::chrono::seconds{15});
-          spdlog::info("reconnect [{}]"sv, rc);
-          client->reconnect();
-        }
+        p_mendel_state.client = client;
       }
-    }
-    catch(const std::exception & ex)
-    {
-      spdlog::critical("Exception caught [{}]"sv, ex.what());
-    }
-    catch(...)
-    {
-      spdlog::critical("Exception caught!"sv);
-    }
+    };
 
-    client->disconnect();
+    LockMendelState::visit(g_mendel_state, do_create_client);
 
-    while(client->is_connected())
+    if(client)
     {
-      sleep(1);
+      client->run();
+
+      while(client->is_connected())
+      {
+        sleep(1);
+      }
+
+      LockMendelState::visit(g_mendel_state, [](auto & p_mendel_state) {
+        p_mendel_state.client.reset();
+      });
     }
-    client.reset();
 
     cache_thread.request_stop();
     cache_thread.join();
