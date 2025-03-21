@@ -37,7 +37,6 @@ namespace yafiyogi::mendel {
 
 struct mqtt_config final
 {
-    std::string id{};
     std::string host{};
     int port = yy_mqtt::mqtt_default_port;
     MqttHandlerStore handlers{};
