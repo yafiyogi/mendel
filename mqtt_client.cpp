@@ -50,7 +50,6 @@ mqtt_client::mqtt_client(mqtt_config & p_config,
   mosqpp::mosquittopp(),
   m_topics(std::move(p_config.topics)),
   m_subscriptions(std::move(p_config.subscriptions)),
-  m_id(std::move(p_config.id)),
   m_host(std::move(p_config.host)),
   m_port(p_config.port),
   m_cache_queue(std::move(p_cache_queue))
@@ -65,14 +64,38 @@ mqtt_client::mqtt_client(mqtt_config & p_config,
   // mosqpp::mosquittopp::opts_set(MOSQ_OPT_TCP_QUICKACK, &quickack_flag);
 }
 
-void mqtt_client::connect()
+void mqtt_client::run()
 {
   mosqpp::mosquittopp::connect(m_host.c_str(), m_port, default_keepalive_seconds);
+
+  try
+  {
+    while(!m_stop.load(std::memory_order_acquire))
+    {
+      if(auto rc = loop();
+         rc)
+      {
+        std::this_thread::sleep_for(std::chrono::seconds{15});
+        spdlog::info("reconnect [{}]"sv, rc);
+        reconnect();
+      }
+    }
+  }
+  catch(const std::exception & ex)
+  {
+    spdlog::critical("Exception caught [{}]"sv, ex.what());
+  }
+  catch(...)
+  {
+    spdlog::critical("Exception caught!"sv);
+  }
+
+  disconnect();
 }
 
 void mqtt_client::on_connect(int rc)
 {
-  m_is_connected = true;
+  m_is_connected.store(true, std::memory_order_release);
 
   spdlog::debug("{}[{}]"sv, "MQTT Connected status="sv, rc);
   spdlog::info("{}"sv, " Subscribing to:"sv);
@@ -105,7 +128,8 @@ void mqtt_client::on_subscribe(int /* mid */,
 void mqtt_client::on_disconnect(int rc)
 {
   spdlog::info("{}[{}]"sv, "MQTT Disconnected status="sv, rc);
-  m_is_connected = false;
+
+  m_is_connected.store(false, std::memory_order_release);
 }
 
 struct ActionData final
@@ -151,6 +175,16 @@ void mqtt_client::on_message(const struct mosquitto_message * message)
 
     m_cache_queue.QSwapIn(m_metric_data);
   }
+}
+
+void mqtt_client::stop()
+{
+  m_stop.store(true, std::memory_order_release);
+}
+
+bool mqtt_client::is_connected() noexcept
+{
+  return m_is_connected.load(std::memory_order_acquire);
 }
 
 } // namespace yafiyogi::mendel

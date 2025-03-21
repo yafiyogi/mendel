@@ -37,9 +37,8 @@
 
 #include "yy_mqtt/yy_mqtt_constants.h"
 
-#include "cache_handler.hpp"
 #include "values_labels.h"
-
+#include "values_metric_data_queue.hpp"
 #include "mqtt_topics.h"
 
 namespace yafiyogi::mendel {
@@ -63,13 +62,9 @@ class mqtt_client final:
     mqtt_client & operator=(const mqtt_client &) = delete;
     constexpr mqtt_client & operator=(mqtt_client &&) noexcept = default;
 
-
-    void connect();
-    bool is_connected() noexcept
-    {
-      return m_is_connected;
-    }
-
+    void run();
+    void stop();
+    bool is_connected() noexcept;
     void on_connect(int rc) override;
     void on_disconnect(int rc) override;
     void on_message(const struct mosquitto_message * message) override;
@@ -79,17 +74,16 @@ class mqtt_client final:
 
   private:
     static constexpr int default_keepalive_seconds = 60;
-    static constexpr int ringbuffer_capacity = 64;
 
     Topics m_topics{};
     Subscriptions m_subscriptions{};
-    std::string m_id{};
     std::string m_host{};
     int m_port = yy_mqtt::mqtt_default_port;
-    std::atomic<bool> m_is_connected = false;
     yy_mqtt::TopicLevelsView m_path{};
     values::MetricDataVector m_metric_data{};
     values::MetricDataQueueWriter m_cache_queue{};
+    std::atomic<bool> m_is_connected = false;
+    std::atomic<bool> m_stop = false;
 };
 
 } // namespace yafiyogi::mendel
