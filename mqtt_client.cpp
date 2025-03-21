@@ -160,7 +160,7 @@ void mqtt_client::on_message(const struct mosquitto_message * message)
     const std::string_view data{static_cast<std::string_view::value_type *>(message->payload),
                                 static_cast<std::string_view::size_type>(message->payloadlen)};
 
-    int64_t ts = std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now()).time_since_epoch().count();
+    timestamp_type ts{std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now()).time_since_epoch()};
 
     m_metric_data.clear(yy_data::ClearAction::Keep);
 

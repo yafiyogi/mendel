@@ -70,7 +70,7 @@ const std::string & Metric::Property() const noexcept
 void Metric::Event(std::string_view p_value,
                    const std::string_view p_topic,
                    const yy_mqtt::TopicLevelsView & p_levels,
-                   const int64_t p_timestamp,
+                   const timestamp_type p_timestamp,
                    ValueType p_value_type,
                    values::MetricDataVectorPtr p_metric_data)
 {

@@ -49,8 +49,6 @@ using ParamVector = yy_quad::simple_vector<values::MetricDataObsPtr>;
 class Action
 {
   public:
-    using timestamp_type = std::chrono::nanoseconds;
-
     constexpr Action() noexcept = default;
     constexpr Action(const Action &) noexcept = default;
     constexpr Action(Action &&) noexcept = default;

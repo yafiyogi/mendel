@@ -31,6 +31,7 @@
 #include <string>
 #include <variant>
 
+#include "yy_cpp/yy_types.hpp"
 #include "yy_cpp/yy_vector.h"
 #include "yy_cpp/yy_observer_ptr.hpp"
 
@@ -56,7 +57,7 @@ class MetricData final
       m_binary(std::move(p_other.m_binary)),
       m_value_type(p_other.m_value_type)
     {
-      p_other.m_timestamp = 0;
+      p_other.m_timestamp = timestamp_type{};
       p_other.m_value_type = ValueType::Unknown;
     }
 
@@ -68,7 +69,7 @@ class MetricData final
         m_id = std::move(p_other.m_id);
         m_labels = std::move(p_other.m_labels);
         m_timestamp = p_other.m_timestamp;
-        p_other.m_timestamp = 0;
+        p_other.m_timestamp = timestamp_type{};
         m_value = std::move(p_other.m_value);
         m_binary = std::move(p_other.m_binary);
         m_value_type = p_other.m_value_type;
@@ -107,12 +108,12 @@ class MetricData final
       return m_labels;
     }
 
-    constexpr int64_t Timestamp() const noexcept
+    constexpr timestamp_type Timestamp() const noexcept
     {
       return m_timestamp;
     }
 
-    constexpr void Timestamp(int64_t p_timestamp) noexcept
+    constexpr void Timestamp(timestamp_type p_timestamp) noexcept
     {
       m_timestamp = p_timestamp;
     }
@@ -150,7 +151,7 @@ class MetricData final
   private:
     MetricId m_id{};
     values::Labels m_labels{};
-    int64_t m_timestamp = 0;
+    timestamp_type m_timestamp{};
     std::string m_value{};
     binary_type m_binary{};
     ValueType m_value_type = ValueType::Unknown;

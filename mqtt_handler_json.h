@@ -78,7 +78,7 @@ class JsonVisitor
     void levels(const yy_mqtt::TopicLevelsView * p_levels) noexcept;
     void metric_data(values::MetricDataVectorPtr p_metric_data) noexcept;
     void topic(const std::string_view p_topic) noexcept;
-    void timestamp(const int64_t p_timestamp) noexcept;
+    void timestamp(const timestamp_type p_timestamp) noexcept;
 
     void apply_str(Metrics & metrics,
                    std::string_view str)
@@ -117,7 +117,7 @@ class JsonVisitor
     {
       m_levels = &g_empty_levels;
       m_metric_data.release();
-      m_timestamp = 0;
+      m_timestamp = timestamp_type{};
       m_topic = std::string_view{};
     }
 
@@ -132,7 +132,7 @@ class JsonVisitor
 
     yy_data::observer_ptr<std::add_const_t<yy_mqtt::TopicLevelsView>> m_levels{&g_empty_levels};
     values::MetricDataVectorPtr m_metric_data{};
-    int64_t m_timestamp = 0;
+    timestamp_type m_timestamp{};
     std::string_view m_topic{};
 };
 
@@ -164,7 +164,7 @@ class MqttJsonHandler final:
     void Event(std::string_view p_mqtt_data,
                const std::string_view p_topic,
                const yy_mqtt::TopicLevelsView & p_levels,
-               const int64_t p_timestamp,
+               const timestamp_type p_timestamp,
                values::MetricDataVectorPtr p_metric_data) noexcept override;
 
   private:

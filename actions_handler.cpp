@@ -65,7 +65,7 @@ struct ActionValue final
     }
 
     void Run(values::Store & p_value_store,
-             actions::Action::timestamp_type timestamp)
+             timestamp_type timestamp)
     {
       action->Run(values, p_value_store, timestamp);
     }
@@ -129,7 +129,7 @@ void ActionsHandler::Run(std::stop_token p_stop_token)
         std::ignore = l_actions_store.Find(add_actions_n_data, data.Id());
       }
 
-      actions::Action::timestamp_type timestamp{std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::utc_clock::now()).time_since_epoch()};
+      timestamp_type timestamp{std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::utc_clock::now()).time_since_epoch()};
       for(auto & action : l_actions)
       {
         action.Run(l_values_store, timestamp);

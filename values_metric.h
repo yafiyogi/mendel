@@ -30,6 +30,7 @@
 #include <string>
 #include <string_view>
 
+#include "yy_cpp/yy_types.hpp"
 #include "yy_cpp/yy_vector.h"
 #include "yy_cpp/yy_flat_map.h"
 
@@ -67,7 +68,7 @@ class Metric final
     void Event(std::string_view p_value,
                const std::string_view p_topic,
                const yy_mqtt::TopicLevelsView & p_levels,
-               const int64_t p_timestamp,
+               const timestamp_type p_timestamp,
                ValueType p_value_type,
                MetricDataVectorPtr p_metric_data);
 

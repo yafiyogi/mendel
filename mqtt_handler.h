@@ -26,10 +26,9 @@
 
 #pragma once
 
-#include <cstdint>
-
 #include <string_view>
 
+#include "yy_cpp/yy_types.hpp"
 #include "yy_mqtt/yy_mqtt_types.h"
 
 #include "mqtt_handler_fwd.h"
@@ -43,6 +42,7 @@ namespace yafiyogi::mendel {
 class MqttHandler
 {
   public:
+
     enum class type {Json, Text, Value};
 
     explicit MqttHandler(std::string_view p_handler_id,
@@ -85,7 +85,7 @@ class MqttHandler
     virtual void Event(std::string_view p_mqtt_data,
                        const std::string_view p_topic,
                        const yy_mqtt::TopicLevelsView & p_levels ,
-                       const int64_t p_timestamp,
+                       const timestamp_type p_timestamp,
                        values::MetricDataVectorPtr p_metric_data) noexcept = 0;
   private:
     std::string m_handler_id{};

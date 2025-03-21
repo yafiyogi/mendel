@@ -60,7 +60,7 @@ void JsonVisitor::topic(const std::string_view p_topic) noexcept
   m_topic = p_topic;
 }
 
-void JsonVisitor::timestamp(const int64_t p_timestamp) noexcept
+void JsonVisitor::timestamp(const timestamp_type p_timestamp) noexcept
 {
   m_timestamp = p_timestamp;
 }
@@ -100,7 +100,7 @@ MqttJsonHandler::MqttJsonHandler(std::string_view p_handler_id,
 void MqttJsonHandler::Event(std::string_view p_mqtt_data,
                             const std::string_view p_topic,
                             const yy_mqtt::TopicLevelsView & p_levels,
-                            const int64_t p_timestamp,
+                            const timestamp_type p_timestamp,
                             values::MetricDataVectorPtr p_metric_data) noexcept
 {
   spdlog::debug("  handler [{}]"sv, Id());
