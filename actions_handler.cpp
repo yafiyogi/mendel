@@ -49,7 +49,6 @@ class NullAction final:
 NullAction null_action;
 actions::ActionObsPtr g_null_action{&null_action};
 
-
 constexpr size_type spin_max = 400;
 
 struct ActionValue final
