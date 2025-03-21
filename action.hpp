@@ -26,6 +26,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <memory>
 
 #include "yy_cpp/yy_observer_ptr.hpp"
@@ -48,6 +49,8 @@ using ParamVector = yy_quad::simple_vector<values::MetricDataObsPtr>;
 class Action
 {
   public:
+    using timestamp_type = std::chrono::nanoseconds;
+
     constexpr Action() noexcept = default;
     constexpr Action(const Action &) noexcept = default;
     constexpr Action(Action &&) noexcept = default;
@@ -58,7 +61,7 @@ class Action
 
     virtual void Run(const ParamVector & params,
                      values::Store & store,
-                     int64_t timestamp) noexcept = 0;
+                     timestamp_type timestamp) noexcept = 0;
 };
 
 using ActionPtr = std::unique_ptr<Action>;

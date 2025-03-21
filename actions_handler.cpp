@@ -41,7 +41,7 @@ class NullAction final:
   public:
     void Run(const actions::ParamVector & /* params */,
              values::Store & /* store */,
-             int64_t /* timestamp */) noexcept override
+             timestamp_type /* timestamp */) noexcept override
     {
     }
 };
@@ -65,7 +65,7 @@ struct ActionValue final
     }
 
     void Run(values::Store & p_value_store,
-             int64_t timestamp)
+             actions::Action::timestamp_type timestamp)
     {
       action->Run(values, p_value_store, timestamp);
     }
@@ -129,10 +129,10 @@ void ActionsHandler::Run(std::stop_token p_stop_token)
         std::ignore = l_actions_store.Find(add_actions_n_data, data.Id());
       }
 
-      int64_t ts = std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::utc_clock::now()).time_since_epoch().count();
+      actions::Action::timestamp_type timestamp{std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::utc_clock::now()).time_since_epoch()};
       for(auto & action : l_actions)
       {
-        action.Run(l_values_store, ts);
+        action.Run(l_values_store, timestamp);
       }
       l_actions.clear(yy_data::ClearAction::Keep);
     }

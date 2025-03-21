@@ -87,7 +87,7 @@ class KalmanAction final:
                  const KalmanOptions & p_options);
     void Run(const ParamVector & params,
              values::Store & store,
-             int64_t timestamp) noexcept override;
+             timestamp_type timestamp) noexcept override;
 
     constexpr const std::string & Id() const noexcept
     {
