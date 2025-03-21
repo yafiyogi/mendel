@@ -32,6 +32,12 @@
 
 #include "values_metric_id.h"
 
+namespace yafiyogi::values::fmt_detail {
+
+static constexpr std::string_view metric_id_fmt{"{}:{}"};
+
+} // namespace yafiyogi::values::fmt_detail
+
 template <>
 struct fmt::formatter<yafiyogi::values::MetricId>:
   formatter<std::string_view>
@@ -40,7 +46,7 @@ struct fmt::formatter<yafiyogi::values::MetricId>:
                 format_context & ctx) const
     {
       return fmt::format_to(ctx.out(),
-                            "{}:{}",
+                            yafiyogi::values::fmt_detail::metric_id_fmt,
                             p_metric_id.Id(),
                             p_metric_id.Location());
     }
