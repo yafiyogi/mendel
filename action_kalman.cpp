@@ -32,6 +32,8 @@
 
 #include "yy_cpp/yy_find_iter_util.hpp"
 
+#include "yy_maths/yy_matrix_fmt.hpp"
+
 #include "values_metric_id_fmt.hpp"
 
 #include "action_kalman.hpp"
@@ -53,7 +55,8 @@ namespace {
 constexpr auto g_json_property_format{"\"{}\":{:.2f},"_cf};
 constexpr auto g_timestamp_format{"\"utc_micros\":{}}}"_cf};
 constexpr auto g_ouput_value_id{"{}:{}"_cf};
-}
+
+} // anonymous
 
 KalmanAction::KalmanAction(std::string_view p_id,
                            std::string_view p_output_topic,
@@ -115,7 +118,7 @@ KalmanAction::KalmanAction(std::string_view p_id,
 
 void KalmanAction::Run(const ParamVector & p_params,
                        values::Store & values_store,
-                       int64_t timestamp) noexcept
+                       timestamp_type timestamp) noexcept
 {
   // Zero mapping sensor-function Jacobian matrix h.
   m_h = zero_matrix{m_ekf.M(), m_ekf.N()};
@@ -154,12 +157,14 @@ void KalmanAction::Run(const ParamVector & p_params,
 
   if(do_calc)
   {
-    spdlog::debug("kalman: [{}] previous [{:.2f}]"sv, m_id, fmt::join(m_ekf.X(), " "));
-    m_ekf.predict();
+    spdlog::debug("kalman: [{}] values [{:.0f}]"sv, m_id, m_h);
 
-    spdlog::debug("kalman: [{}]   inputs [{:.2f}]"sv, m_id, fmt::join(m_observations, " "));
+    spdlog::debug("kalman: [{}] previous [{:.2f}]"sv, m_id, m_ekf.X());
+      m_ekf.predict();
+
+    spdlog::debug("kalman: [{}]   inputs [{:.2f}]"sv, m_id, m_observations);
     m_ekf.update(m_observations, m_h, m_hx);
-    spdlog::debug("kalman: [{}]  outputs [{:.2f}]"sv, m_id, fmt::join(m_ekf.X(), " "));
+    spdlog::debug("kalman: [{}]  outputs [{:.2f}]"sv, m_id, m_ekf.X());
 
     m_json = "{"sv;
     for(auto & output : m_outputs)
@@ -178,7 +183,9 @@ void KalmanAction::Run(const ParamVector & p_params,
                      ekf_Xn);
 
     }
-    fmt::format_to(std::back_inserter(m_json), g_timestamp_format, timestamp);
+    fmt::format_to(std::back_inserter(m_json),
+                   g_timestamp_format,
+                   std::chrono::duration_cast<std::chrono::microseconds>(timestamp));
 
     spdlog::debug("kalman: [{}] json=[{}]"sv, m_id, m_json);
   }
