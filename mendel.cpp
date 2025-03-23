@@ -163,8 +163,9 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  auto mqtt_config{mendel::configure_mqtt(yaml_mqtt,
-                                          values_config)};
+  auto mqtt_config{mendel::configure_mqtt(yaml_mqtt)};
+  auto mqtt_client_config{mendel::configure_mqtt_client(yaml_mqtt,
+                                                        values_config)};
 
   spdlog::info("Configure actions:"sv);
   mendel::actions::StorePtr actions_store{};
@@ -204,10 +205,11 @@ int main(int argc, char* argv[])
     mosqpp::lib_init();
 
     ClientPtr client;
-    auto do_create_client = [&client, &mqtt_config, &cache_queue](auto & p_mendel_state) {
+    auto do_create_client = [&client, &mqtt_config, &mqtt_client_config, &cache_queue](auto & p_mendel_state) {
       if(!p_mendel_state.exit_program)
       {
         client =  std::make_unique<mendel::mqtt_client>(mqtt_config,
+                                                        mqtt_client_config,
                                                         values::MetricDataQueueWriter{cache_queue});
 
         p_mendel_state.client = client;
@@ -219,11 +221,6 @@ int main(int argc, char* argv[])
     if(client)
     {
       client->run();
-
-      while(client->is_connected())
-      {
-        sleep(1);
-      }
 
       LockMendelState::visit(g_mendel_state, [](auto & p_mendel_state) {
         p_mendel_state.client.reset();
