@@ -32,6 +32,7 @@
 #include "yy_cpp/yy_observer_ptr.hpp"
 #include "yy_cpp/yy_vector.h"
 
+#include "action_result.hpp"
 #include "values_metric_data.h"
 
 namespace yafiyogi::values {
@@ -40,7 +41,7 @@ class Store;
 
 } // namespace yafiyogi::values
 
-namespace yafiyogi::mendel::actions {
+namespace yafiyogi::actions {
 
 class Store;
 
@@ -57,9 +58,10 @@ class Action
     constexpr Action & operator=(const Action &) noexcept = default;
     constexpr Action & operator=(Action &&) noexcept = default;
 
-    virtual void Run(const ParamVector & params,
-                     values::Store & store,
-                     timestamp_type timestamp) noexcept = 0;
+    virtual void Run(const ParamVector & p_params,
+                     ActionResultVector & p_results,
+                     values::Store & p_values_store,
+                     timestamp_type p_timestamp) noexcept = 0;
 };
 
 using ActionPtr = std::unique_ptr<Action>;

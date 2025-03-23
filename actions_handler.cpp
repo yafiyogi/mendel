@@ -40,6 +40,7 @@ class NullAction final:
 {
   public:
     void Run(const actions::ParamVector & /* params */,
+             actions::ActionResultVector & /* p_results */,
              values::Store & /* store */,
              timestamp_type /* timestamp */) noexcept override
     {
@@ -64,9 +65,10 @@ struct ActionValue final
     }
 
     void Run(values::Store & p_value_store,
+             actions::ActionResultVector & p_results,
              timestamp_type timestamp)
     {
-      action->Run(values, p_value_store, timestamp);
+      action->Run(values, p_results, p_value_store, timestamp);
     }
 
     actions::ActionObsPtr action = g_null_action;
@@ -74,7 +76,6 @@ struct ActionValue final
 };
 
 using ActionValueVector = yy_quad::simple_vector<ActionValue>;
-
 
 } // anonymous namespace
 
@@ -95,13 +96,19 @@ void ActionsHandler::Run(std::stop_token p_stop_token)
   values::Store & l_values_store = *m_values_store;
 
   size_type spin = 1; // Set to 1 to prevent spinning at startup.
+
+  actions::ActionResultVector l_action_values{};
+  ActionValueVector l_actions{};
+
   while(!p_stop_token.stop_requested())
   {
     while(m_queue.QSwapOut(l_data_in))
     {
       spin = spin_max; // Reset spin count.
 
-      ActionValueVector l_actions{};
+      l_action_values.clear(yy_data::ClearAction::Keep);
+      l_actions.clear(yy_data::ClearAction::Keep);
+
       for(auto & data : l_data_in)
       {
         auto add_actions_n_data = [&data, &l_actions](actions::Store::value_ptr actions) {
@@ -123,7 +130,7 @@ void ActionsHandler::Run(std::stop_token p_stop_token)
               values.emplace(data_iter, data_ptr);
             }
           }
-       };
+        };
 
         std::ignore = l_actions_store.Find(add_actions_n_data, data.Id());
       }
@@ -131,9 +138,10 @@ void ActionsHandler::Run(std::stop_token p_stop_token)
       timestamp_type timestamp{std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::utc_clock::now()).time_since_epoch()};
       for(auto & action : l_actions)
       {
-        action.Run(l_values_store, timestamp);
+        action.Run(l_values_store, l_action_values, timestamp);
       }
-      l_actions.clear(yy_data::ClearAction::Keep);
+
+
     }
 
     if(0 == --spin)
