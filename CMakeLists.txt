@@ -65,6 +65,7 @@ add_executable(mendel
   configure_label_actions.cpp
   configure_logging.cpp
   configure_mqtt.cpp
+  configure_mqtt_client.cpp
   configure_mqtt_handlers.cpp
   configure_mqtt_topics.cpp
   configure_values.cpp
@@ -77,6 +78,7 @@ add_executable(mendel
   mqtt_handler.cpp
   mqtt_handler_json.cpp
   mqtt_handler_value.cpp
+  mqtt_publisher.cpp
   replacement_format.cpp
   value_action_keep.cpp
   value_action_switch.cpp
