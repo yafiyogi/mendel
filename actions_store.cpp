@@ -31,7 +31,7 @@
 
 #include "actions_store.hpp"
 
-namespace yafiyogi::mendel::actions {
+namespace yafiyogi::actions {
 
 Store::Store(store_type && p_store,
              actions_type && p_actions):
@@ -69,4 +69,4 @@ StorePtr StoreBuilder::Create()
   return std::make_unique<Store>(m_store_builder.create_automaton(), std::move(m_actions));
 }
 
-} // namespace yafiyogi::mendel::actions
+} // namespace yafiyogi::actions

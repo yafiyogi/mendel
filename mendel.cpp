@@ -47,6 +47,7 @@
 #include "configure_actions.hpp"
 #include "configure_logging.h"
 #include "configure_mqtt.h"
+#include "configure_mqtt_client.h"
 #include "configure_values.h"
 #include "logger.h"
 #include "mqtt_client.h"
@@ -168,10 +169,10 @@ int main(int argc, char* argv[])
                                                         values_config)};
 
   spdlog::info("Configure actions:"sv);
-  mendel::actions::StorePtr actions_store{};
+  actions::StorePtr actions_store{};
   values::StorePtr values_store{};
   {
-    mendel::actions::StoreBuilder actions_builder{};
+    actions::StoreBuilder actions_builder{};
     values::StoreBuilder values_builder{};
 
     mendel::configure_actions(yaml_config["actions"sv],

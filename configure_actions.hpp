@@ -34,7 +34,7 @@ class StoreBuilder;
 
 } // namespace yafiyogi::values
 
-namespace yafiyogi::mendel::actions {
+namespace yafiyogi::actions {
 
 class StoreBuilder;
 

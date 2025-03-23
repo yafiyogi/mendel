@@ -31,16 +31,16 @@
 #include "action.hpp"
 #include "values_metric_id_trie.hpp"
 
-namespace yafiyogi::mendel::actions {
+namespace yafiyogi::actions {
 
 class Store
 {
   public:
-    using value_type = yy_quad::simple_vector<ActionObsPtr>;
+    using value_type = yy_quad::simple_vector<actions::ActionObsPtr>;
     using value_ptr = yy_data::observer_ptr<value_type>;
     using store_builder_type = values::metric_id_trie<value_type>;
     using store_type = store_builder_type::automaton_type;
-    using actions_type = yy_quad::simple_vector<ActionPtr>;
+    using actions_type = yy_quad::simple_vector<actions::ActionPtr>;
 
     Store(store_type && p_store, actions_type && p_actions);
 
@@ -95,4 +95,4 @@ class StoreBuilder
 };
 
 
-} // namespace yafiyogi::mendel::actions
+} // namespace yafiyogi::actions
