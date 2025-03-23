@@ -24,24 +24,33 @@
 
 */
 
-#pragma once
-
 #include <string>
 
-#include "yy_mqtt/yy_mqtt_constants.h"
+#include "spdlog/spdlog.h"
 
-#include "yy_tp_util/yaml_fwd.h"
+#include "yy_cpp/yy_yaml_util.h"
+
+#include "configure_mqtt_handlers.h"
+#include "configure_mqtt_topics.h"
+#include "mqtt_handler.h"
+#include "values_config.h"
+
+#include "configure_mqtt_client.h"
 
 namespace yafiyogi::mendel {
 
-struct mqtt_config final
-{
-    std::string host{};
-    int port = yy_mqtt::mqtt_default_port;
-    int qos = 2;
-    bool retain = true;
-};
+using namespace std::string_literals;
+using namespace std::string_view_literals;
 
-mqtt_config configure_mqtt(const YAML::Node & yaml_mqtt);
+mqtt_client_config configure_mqtt_client(const YAML::Node & yaml_mqtt,
+                                  values::MetricsMap & p_values_config)
+{
+  auto handlers = configure_mqtt_handlers(yaml_mqtt["handlers"sv], p_values_config);
+  auto [subscriptions, topics] = configure_mqtt_topics(yaml_mqtt["topics"sv], handlers);
+
+  return mqtt_client_config{std::move(handlers),
+                            std::move(subscriptions),
+                            std::move(topics)};
+}
 
 } // namespace yafiyogi::mendel

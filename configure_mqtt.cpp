@@ -33,11 +33,6 @@
 #include "yy_cpp/yy_string_case.h"
 #include "yy_cpp/yy_yaml_util.h"
 
-#include "configure_mqtt_handlers.h"
-#include "configure_mqtt_topics.h"
-#include "mqtt_handler.h"
-#include "values_config.h"
-
 #include "configure_mqtt.h"
 
 namespace yafiyogi::mendel {
@@ -81,17 +76,6 @@ mqtt_config configure_mqtt(const YAML::Node & yaml_mqtt)
                      port,
                      qos,
                      retain};
-}
-
-mqtt_client_config configure_mqtt_client(const YAML::Node & yaml_mqtt,
-                                  values::MetricsMap & p_values_config)
-{
-  auto handlers = configure_mqtt_handlers(yaml_mqtt["handlers"sv], p_values_config);
-  auto [subscriptions, topics] = configure_mqtt_topics(yaml_mqtt["topics"sv], handlers);
-
-  return mqtt_client_config{std::move(handlers),
-                            std::move(subscriptions),
-                            std::move(topics)};
 }
 
 } // namespace yafiyogi::mendel

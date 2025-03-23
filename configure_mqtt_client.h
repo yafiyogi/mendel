@@ -26,22 +26,22 @@
 
 #pragma once
 
-#include <string>
-
-#include "yy_mqtt/yy_mqtt_constants.h"
-
 #include "yy_tp_util/yaml_fwd.h"
+
+#include "mqtt_handler_fwd.h"
+#include "mqtt_topics.h"
+#include "values_metric.h"
 
 namespace yafiyogi::mendel {
 
-struct mqtt_config final
+struct mqtt_client_config final
 {
-    std::string host{};
-    int port = yy_mqtt::mqtt_default_port;
-    int qos = 2;
-    bool retain = true;
+    MqttHandlerStore handlers{};
+    Subscriptions subscriptions{};
+    Topics topics{};
 };
 
-mqtt_config configure_mqtt(const YAML::Node & yaml_mqtt);
+mqtt_client_config configure_mqtt_client(const YAML::Node & yaml_mqtt,
+                                         values::MetricsMap & p_values_config);
 
 } // namespace yafiyogi::mendel
