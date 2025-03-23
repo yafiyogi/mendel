@@ -36,7 +36,7 @@
 #include "action.hpp"
 #include "values_metric_id.h"
 
-namespace yafiyogi::mendel::actions {
+namespace yafiyogi::actions {
 namespace kalman_action_detail {
 
 struct OutputMapping
@@ -85,9 +85,10 @@ class KalmanAction final:
                  std::string_view p_output_topic,
                  std::string_view p_output_value_id,
                  const KalmanOptions & p_options);
-    void Run(const ParamVector & params,
-             values::Store & store,
-             timestamp_type timestamp) noexcept override;
+    void Run(const ParamVector & p_params,
+             ActionResultVector & p_results,
+             values::Store & p_values_store,
+             timestamp_type p_timestamp) noexcept override;
 
     constexpr const std::string & Id() const noexcept
     {
@@ -116,7 +117,7 @@ class KalmanAction final:
     using InputMap = yy_quad::simple_vector<kalman_action_detail::InputMapping>;
     InputMap m_inputs{};
 
-    std::string m_json{};
+    ActionResult m_result{};
 };
 
-} // namespace yafiyogi::mendel::actions
+} // namespace yafiyogi::actions

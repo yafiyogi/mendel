@@ -39,7 +39,7 @@
 #include "action_kalman.hpp"
 #include "values_store.hpp"
 
-namespace yafiyogi::mendel::actions {
+namespace yafiyogi::actions {
 
 using namespace std::string_view_literals;
 using namespace fmt::literals;
@@ -117,8 +117,9 @@ KalmanAction::KalmanAction(std::string_view p_id,
 
 
 void KalmanAction::Run(const ParamVector & p_params,
-                       values::Store & values_store,
-                       timestamp_type timestamp) noexcept
+                       ActionResultVector & p_results,
+                       values::Store & p_values_store,
+                       timestamp_type p_timestamp) noexcept
 {
   // Zero mapping sensor-function Jacobian matrix h.
   m_h = zero_matrix{m_ekf.M(), m_ekf.N()};
@@ -166,7 +167,8 @@ void KalmanAction::Run(const ParamVector & p_params,
     m_ekf.update(m_observations, m_h, m_hx);
     spdlog::debug("kalman: [{}]  outputs [{:.2f}]"sv, m_id, m_ekf.X());
 
-    m_json = "{"sv;
+    m_result.topic = m_output_topic;
+    m_result.data = "{"sv;
     for(auto & output : m_outputs)
     {
       auto ekf_Xn = m_ekf.X(output.output_idx);
@@ -175,20 +177,22 @@ void KalmanAction::Run(const ParamVector & p_params,
         p_value->store(ekf_Xn, std::memory_order_release);
       };
 
-      std::ignore = values_store.Find(add_value_to_store, output.value_id);
+      std::ignore = p_values_store.Find(add_value_to_store, output.value_id);
 
-      fmt::format_to(std::back_inserter(m_json),
+      fmt::format_to(std::back_inserter(m_result.data),
                      g_json_property_format,
                      output.property,
                      ekf_Xn);
 
     }
-    fmt::format_to(std::back_inserter(m_json),
+    fmt::format_to(std::back_inserter(m_result.data),
                    g_timestamp_format,
-                   std::chrono::duration_cast<std::chrono::microseconds>(timestamp));
+                   std::chrono::duration_cast<std::chrono::microseconds>(p_timestamp));
 
-    spdlog::debug("kalman: [{}] json=[{}]"sv, m_id, m_json);
+    spdlog::debug("kalman: [{}] json=[{}]"sv, m_id, m_result.data);
+
+    p_results.swap_data_back(m_result);
   }
 }
 
-} // namespace yafiyogi::mendel::actions
+} // namespace yafiyogi::actions
