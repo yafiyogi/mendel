@@ -26,9 +26,6 @@
 
 #pragma once
 
-#include <memory>
-#include <stop_token>
-
 #include "yy_cpp/yy_ring_buffer.h"
 
 #include "values_metric_data.h"

@@ -35,6 +35,7 @@
 
 #include "action.hpp"
 #include "configure_mqtt.h"
+#include "configure_mqtt_client.h"
 #include "mqtt_handler.h"
 #include "values_labels.h"
 #include "values_metric_labels.hpp"

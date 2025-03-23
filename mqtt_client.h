@@ -35,8 +35,6 @@
 
 #include "mosquittopp.h"
 
-#include "yy_mqtt/yy_mqtt_constants.h"
-
 #include "values_labels.h"
 #include "values_metric_data_queue.hpp"
 #include "mqtt_topics.h"
@@ -47,6 +45,7 @@ class CacheHandler;
 using CacheHandlerPtr = std::shared_ptr<CacheHandler>;
 
 class mqtt_config;
+class mqtt_client_config;
 
 class mqtt_client final:
       public mosqpp::mosquittopp
