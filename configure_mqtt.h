@@ -39,12 +39,20 @@ struct mqtt_config final
 {
     std::string host{};
     int port = yy_mqtt::mqtt_default_port;
+    int qos = 2;
+    bool retain = true;
+};
+
+struct mqtt_client_config final
+{
     MqttHandlerStore handlers{};
     Subscriptions subscriptions{};
     Topics topics{};
 };
 
-mqtt_config configure_mqtt(const YAML::Node & yaml_mqtt,
-                           values::MetricsMap & value_config);
+mqtt_config configure_mqtt(const YAML::Node & yaml_mqtt);
+
+mqtt_client_config configure_mqtt_client(const YAML::Node & yaml_mqtt,
+                                         values::MetricsMap & p_values_config);
 
 } // namespace yafiyogi::mendel

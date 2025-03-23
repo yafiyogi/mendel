@@ -28,6 +28,9 @@
 
 #include "spdlog/spdlog.h"
 
+#include "yy_cpp/yy_make_lookup.h"
+#include "yy_cpp/yy_string_util.h"
+#include "yy_cpp/yy_string_case.h"
 #include "yy_cpp/yy_yaml_util.h"
 
 #include "configure_mqtt_handlers.h"
@@ -42,8 +45,25 @@ namespace yafiyogi::mendel {
 using namespace std::string_literals;
 using namespace std::string_view_literals;
 
-mqtt_config configure_mqtt(const YAML::Node & yaml_mqtt,
-                           values::MetricsMap & p_values_config)
+constexpr auto bool_types =
+  yy_data::make_lookup<std::string_view, bool>(true,
+                                               {{"yes"sv, true},
+                                                {"true"sv, true},
+                                                {"on"sv, true},
+                                                {"enable"sv, true},
+                                                {"no"sv, false},
+                                                {"false"sv, false},
+                                                {"off"sv, false},
+                                                {"disable"sv, false}});
+
+bool decode_bool(const YAML::Node & yaml_bool)
+{
+  std::string bool_name{yy_util::to_lower(yy_util::trim(yy_util::yaml_get_value<std::string_view>(yaml_bool)))};
+
+  return bool_types.lookup(bool_name);
+}
+
+mqtt_config configure_mqtt(const YAML::Node & yaml_mqtt)
 {
   const auto yaml_host = yaml_mqtt["host"sv];
   if(!yaml_host)
@@ -54,17 +74,24 @@ mqtt_config configure_mqtt(const YAML::Node & yaml_mqtt,
   auto host = yaml_host.as<std::string_view>();
 
   int port = yy_util::yaml_get_value(yaml_mqtt["port"sv], yy_mqtt::mqtt_default_port);
-
-  spdlog::info(" MQTT host=[{}] port=[{}]"sv, host, port);
-
-  auto handlers = configure_mqtt_handlers(yaml_mqtt["handlers"sv], p_values_config);
-  auto [subscriptions, topics] = configure_mqtt_topics(yaml_mqtt["topics"sv], handlers);
+  int qos = yy_util::yaml_get_value(yaml_mqtt["qos"sv], yy_mqtt::mqtt_default_port);
+  bool retain = decode_bool(yaml_mqtt);
 
   return mqtt_config{std::string{host},
                      port,
-                     std::move(handlers),
-                     std::move(subscriptions),
-                     std::move(topics)};
+                     qos,
+                     retain};
+}
+
+mqtt_client_config configure_mqtt_client(const YAML::Node & yaml_mqtt,
+                                  values::MetricsMap & p_values_config)
+{
+  auto handlers = configure_mqtt_handlers(yaml_mqtt["handlers"sv], p_values_config);
+  auto [subscriptions, topics] = configure_mqtt_topics(yaml_mqtt["topics"sv], handlers);
+
+  return mqtt_client_config{std::move(handlers),
+                            std::move(subscriptions),
+                            std::move(topics)};
 }
 
 } // namespace yafiyogi::mendel
