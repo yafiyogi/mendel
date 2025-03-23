@@ -53,6 +53,7 @@ class mqtt_client final:
 {
   public:
     explicit mqtt_client(mqtt_config & config,
+                         mqtt_client_config & p_client_config,
                          values::MetricDataQueueWriter && p_cache_queue);
 
     mqtt_client() = delete;
@@ -73,7 +74,9 @@ class mqtt_client final:
                       const int * granted_qos) override;
 
   private:
-    static constexpr int default_keepalive_seconds = 60;
+    static constexpr std::chrono::seconds default_keepalive_seconds{60};
+    static constexpr std::chrono::seconds default_reconnect_delay_seconds{15};
+    static constexpr std::chrono::milliseconds default_disconnect_sleep{500};
 
     Topics m_topics{};
     Subscriptions m_subscriptions{};

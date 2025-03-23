@@ -46,36 +46,39 @@ namespace yafiyogi::mendel {
 using namespace std::string_view_literals;
 
 mqtt_client::mqtt_client(mqtt_config & p_config,
+                         mqtt_client_config & p_client_config,
                          values::MetricDataQueueWriter && p_cache_queue):
   mosqpp::mosquittopp(),
-  m_topics(std::move(p_config.topics)),
-  m_subscriptions(std::move(p_config.subscriptions)),
+  m_topics(std::move(p_client_config.topics)),
+  m_subscriptions(std::move(p_client_config.subscriptions)),
   m_host(std::move(p_config.host)),
   m_port(p_config.port),
   m_cache_queue(std::move(p_cache_queue))
 {
   int mqtt_version = MQTT_PROTOCOL_V5;
-  mosqpp::mosquittopp::opts_set(MOSQ_OPT_PROTOCOL_VERSION, &mqtt_version);
+  opts_set(MOSQ_OPT_PROTOCOL_VERSION, &mqtt_version);
 
   int nodelay_flag = 1;
-  mosqpp::mosquittopp::opts_set(MOSQ_OPT_TCP_NODELAY, &nodelay_flag);
+  opts_set(MOSQ_OPT_TCP_NODELAY, &nodelay_flag);
 
   // int quickack_flag = 1;
-  // mosqpp::mosquittopp::opts_set(MOSQ_OPT_TCP_QUICKACK, &quickack_flag);
+  // opts_set(MOSQ_OPT_TCP_QUICKACK, &quickack_flag);
 }
 
 void mqtt_client::run()
 {
-  mosqpp::mosquittopp::connect(m_host.c_str(), m_port, default_keepalive_seconds);
+  connect(m_host.c_str(),
+          m_port,
+          std::chrono::duration_cast<std::chrono::seconds>(default_keepalive_seconds).count());
 
   try
   {
     while(!m_stop.load(std::memory_order_acquire))
     {
       if(auto rc = loop();
-         rc)
+         0 != rc)
       {
-        std::this_thread::sleep_for(std::chrono::seconds{15});
+        std::this_thread::sleep_for(default_reconnect_delay_seconds);
         spdlog::info("reconnect [{}]"sv, rc);
         reconnect();
       }
@@ -91,6 +94,11 @@ void mqtt_client::run()
   }
 
   disconnect();
+
+  while(is_connected())
+  {
+    std::this_thread::sleep_for(default_disconnect_sleep);
+  }
 }
 
 void mqtt_client::on_connect(int rc)
