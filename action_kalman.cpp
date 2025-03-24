@@ -169,6 +169,7 @@ void KalmanAction::Run(const ParamVector & p_params,
 
     m_result.topic = m_output_topic;
     m_result.data = "{"sv;
+
     for(auto & output : m_outputs)
     {
       auto ekf_Xn = m_ekf.X(output.output_idx);
@@ -185,9 +186,10 @@ void KalmanAction::Run(const ParamVector & p_params,
                      ekf_Xn);
 
     }
+
     fmt::format_to(std::back_inserter(m_result.data),
                    g_timestamp_format,
-                   std::chrono::duration_cast<std::chrono::microseconds>(p_timestamp));
+                   std::chrono::duration_cast<std::chrono::microseconds>(p_timestamp).count());
 
     spdlog::debug("kalman: [{}] json=[{}]"sv, m_id, m_result.data);
 
