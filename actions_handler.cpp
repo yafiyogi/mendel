@@ -81,10 +81,12 @@ using ActionValueVector = yy_quad::simple_vector<ActionValue>;
 
 ActionsHandler::ActionsHandler(actions::StorePtr p_actions_store,
                                values::StorePtr p_values_store,
-                               values::MetricDataQueueReader && p_queue):
+                               values::MetricDataQueueReader && p_queue_in,
+                               actions::ActionResultQueueWriter && p_queue_out):
   m_actions_store(std::move(p_actions_store)),
   m_values_store(std::move(p_values_store)),
-  m_queue(std::move(p_queue))
+  m_queue_in(std::move(p_queue_in)),
+  m_queue_out(std::move(p_queue_out))
 {
 }
 
@@ -102,7 +104,7 @@ void ActionsHandler::Run(std::stop_token p_stop_token)
 
   while(!p_stop_token.stop_requested())
   {
-    while(m_queue.QSwapOut(l_data_in))
+    while(m_queue_in.QSwapOut(l_data_in))
     {
       spin = spin_max; // Reset spin count.
 
@@ -141,13 +143,13 @@ void ActionsHandler::Run(std::stop_token p_stop_token)
         action.Run(l_values_store, l_action_values, timestamp);
       }
 
-
+      m_queue_out.QSwapIn(l_action_values);
     }
 
     if(0 == --spin)
     {
       spin = spin_max; // Reset spin count.
-      m_queue.QWait(p_stop_token, [this] { return !m_queue.QEmpty();});
+      m_queue_in.QWait(p_stop_token, [this] { return !m_queue_in.QEmpty();});
     }
   }
 }

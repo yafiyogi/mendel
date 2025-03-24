@@ -29,8 +29,6 @@
 #include <memory>
 #include <stop_token>
 
-#include "yy_cpp/yy_ring_buffer.h"
-
 #include "actions_handler_fwd.hpp"
 #include "actions_store.hpp"
 #include "values_store.hpp"

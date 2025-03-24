@@ -42,6 +42,7 @@
 #include "yy_cpp/yy_locale.h"
 #include "yy_cpp/yy_yaml_util.h"
 
+#include "actions_result_queue.hpp"
 #include "actions_handler.hpp"
 #include "cache_handler.hpp"
 #include "configure_actions.hpp"
@@ -52,6 +53,7 @@
 #include "logger.h"
 #include "mqtt_client.h"
 #include "mqtt_handler.h"
+#include "mqtt_publisher.hpp"
 
 namespace yafiyogi {
 namespace {
@@ -130,11 +132,11 @@ int main(int argc, char* argv[])
     return 0;
   }
 
-  const YAML::Node yaml_config = YAML::LoadFile(config_file);
+  const YAML::Node & yaml_config = YAML::LoadFile(config_file);
 
   if(0 == vm.count("log"))
   {
-    if(auto yaml_mendel = yaml_config["mendel"sv];
+    if(const auto & yaml_mendel = yaml_config["mendel"sv];
        yaml_mendel)
     {
       log_config = mendel::configure_logging(yaml_mendel["logging"sv],
@@ -146,7 +148,7 @@ int main(int argc, char* argv[])
   spdlog::set_level(log_config.level);
   spdlog::flush_on(spdlog::level::info);
 
-  const auto yaml_values = yaml_config["values"sv];
+  const auto & yaml_values = yaml_config["values"sv];
   if(!yaml_values)
   {
     spdlog::error("Not found values config"sv);
@@ -156,7 +158,7 @@ int main(int argc, char* argv[])
 
   auto values_config{values::configure_values(yaml_values)};
 
-  const auto yaml_mqtt = yaml_config["mqtt"sv];
+  const auto & yaml_mqtt = yaml_config["mqtt"sv];
   if(!yaml_mqtt)
   {
     spdlog::error("Not found mqtt config"sv);
@@ -164,9 +166,22 @@ int main(int argc, char* argv[])
     return 1;
   }
 
+  spdlog::info("Configure client:"sv);
   auto mqtt_config{mendel::configure_mqtt(yaml_mqtt)};
   auto mqtt_client_config{mendel::configure_mqtt_client(yaml_mqtt,
                                                         values_config)};
+
+  spdlog::info("Configure publisher:"sv);
+  auto mqtt_publisher_config{mqtt_config};
+  if(const auto & yaml_publisher = yaml_config["publisher"sv];
+     yaml_publisher)
+  {
+    if(const auto & yaml_publisher_mqtt = yaml_publisher["mqtt"sv];
+       yaml_publisher_mqtt)
+    {
+      configure_mqtt(yaml_publisher_mqtt, mqtt_publisher_config);
+    }
+  }
 
   spdlog::info("Configure actions:"sv);
   actions::StorePtr actions_store{};
@@ -187,14 +202,28 @@ int main(int argc, char* argv[])
 
   if(!no_run)
   {
+    mosqpp::lib_init();
+
+    // MQTT Publisher
+    auto actions_results_queue{std::make_shared<actions::ActionResultQueue>()};
+    auto mqtt_publisher{std::make_shared<mendel::mqtt_publisher>(mqtt_publisher_config,
+                                                        actions::ActionResultQueueReader{actions_results_queue})};
+
+    std::jthread publisher_thread{[&mqtt_publisher](std::stop_token p_stop_token) {
+      mqtt_publisher->Run(p_stop_token);
+    }};
+
+    // Actions Handler
     auto action_queue = std::make_shared<values::MetricDataQueue>();
     auto actions_handler{std::make_shared<mendel::ActionsHandler>(std::move(actions_store),
                                                                   values_store,
-                                                                  values::MetricDataQueueReader{action_queue})};
+                                                                  values::MetricDataQueueReader{action_queue},
+                                                                  actions::ActionResultQueueWriter{actions_results_queue})};
     std::jthread actions_thread{[&actions_handler](std::stop_token p_stop_token) {
       actions_handler->Run(p_stop_token);
     }};
 
+    // Cache Handler
     auto cache_queue = std::make_shared<values::MetricDataQueue>();
     auto cache_handler{std::make_shared<mendel::CacheHandler>(values_store,
                                                               values::MetricDataQueueReader{cache_queue},
@@ -203,8 +232,7 @@ int main(int argc, char* argv[])
       cache_handler->Run(p_stop_token);
     }};
 
-    mosqpp::lib_init();
-
+    // MQTT Client
     ClientPtr client;
     auto do_create_client = [&client, &mqtt_config, &mqtt_client_config, &cache_queue](auto & p_mendel_state) {
       if(!p_mendel_state.exit_program)
@@ -235,6 +263,10 @@ int main(int argc, char* argv[])
     actions_thread.request_stop();
     actions_thread.join();
     actions_handler.reset();
+
+    publisher_thread.request_stop();
+    publisher_thread.join();
+    mqtt_publisher.reset();
 
     mosqpp::lib_cleanup();
   }

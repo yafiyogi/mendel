@@ -51,31 +51,34 @@ constexpr auto bool_types =
                                                 {"off"sv, false},
                                                 {"disable"sv, false}});
 
-bool decode_bool(const YAML::Node & yaml_bool)
+void configure_mqtt(const YAML::Node & yaml_mqtt,
+                    mqtt_config & config)
 {
-  std::string bool_name{yy_util::to_lower(yy_util::trim(yy_util::yaml_get_value<std::string_view>(yaml_bool)))};
+  const auto & yaml_host = yaml_mqtt["host"sv];
+  if(!yaml_host)
+  {
+    spdlog::error("Not found mqtt host\n"sv);
+  }
 
-  return bool_types.lookup(bool_name);
+  config.host = std::string{yaml_host.as<std::string_view>()};
+  config.port = yy_util::yaml_get_value(yaml_mqtt["port"sv], yy_mqtt::mqtt_default_port);
+  config.qos = std::max(0, std::min(2, yy_util::yaml_get_value(yaml_mqtt["qos"sv], 0)));
+  auto retain{yy_util::to_lower(yy_util::trim(yy_util::yaml_get_value<std::string_view>(yaml_mqtt["retain"sv], "yes")))};
+  config.retain = bool_types.lookup(retain);
+
+  spdlog::info("  host  : [{}]"sv, config.host);
+  spdlog::info("  port  : [{}]"sv, config.port);
+  spdlog::info("  qos   : [{}]"sv, config.qos);
+  spdlog::info("  retain: [{}]"sv, retain);
 }
 
 mqtt_config configure_mqtt(const YAML::Node & yaml_mqtt)
 {
-  const auto yaml_host = yaml_mqtt["host"sv];
-  if(!yaml_host)
-  {
-    spdlog::error("Not found mqtt host\n"sv);
-    return mqtt_config{};
-  }
-  auto host = yaml_host.as<std::string_view>();
+  mqtt_config config{};
 
-  int port = yy_util::yaml_get_value(yaml_mqtt["port"sv], yy_mqtt::mqtt_default_port);
-  int qos = yy_util::yaml_get_value(yaml_mqtt["qos"sv], yy_mqtt::mqtt_default_port);
-  bool retain = decode_bool(yaml_mqtt);
+  configure_mqtt(yaml_mqtt, config);
 
-  return mqtt_config{std::string{host},
-                     port,
-                     qos,
-                     retain};
+  return config;
 }
 
 } // namespace yafiyogi::mendel

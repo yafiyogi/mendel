@@ -127,20 +127,6 @@ void mqtt_client::on_connect(int rc)
                                           nullptr);
 }
 
-void mqtt_client::on_subscribe(int /* mid */,
-                               int /* qos_count */,
-                               const int * /* granted_qos */)
-{
-  spdlog::info(" MQTT Subscribed."sv);
-}
-
-void mqtt_client::on_disconnect(int rc)
-{
-  spdlog::info("{}[{}]"sv, "MQTT Disconnected status="sv, rc);
-
-  m_is_connected.store(false, std::memory_order_release);
-}
-
 struct ActionData final
 {
     bool operator<(const actions::ActionPtr & other) const noexcept
@@ -163,7 +149,7 @@ void mqtt_client::on_message(const struct mosquitto_message * message)
   if(auto payloads = m_topics.find(topic);
      !payloads.empty())
   {
-    spdlog::debug("Processing [{}] payloads=[{}]"sv, topic, payloads.size());
+    spdlog::debug("Client Processing [{}] payloads=[{}]"sv, topic, payloads.size());
     yy_mqtt::topic_tokenize_view(m_path, topic);
 
     const std::string_view data{static_cast<std::string_view::value_type *>(message->payload),
@@ -194,6 +180,20 @@ void mqtt_client::stop()
 bool mqtt_client::is_connected() noexcept
 {
   return m_is_connected.load(std::memory_order_acquire);
+}
+
+void mqtt_client::on_subscribe(int /* mid */,
+                               int /* qos_count */,
+                               const int * /* granted_qos */)
+{
+  spdlog::info(" MQTT Client Subscribed."sv);
+}
+
+void mqtt_client::on_disconnect(int rc)
+{
+  spdlog::info("{}[{}]"sv, "MQTT Client Disconnected status="sv, rc);
+
+  m_is_connected.store(false, std::memory_order_release);
 }
 
 } // namespace yafiyogi::mendel

@@ -29,9 +29,8 @@
 #include <memory>
 #include <stop_token>
 
-#include "yy_cpp/yy_ring_buffer.h"
-
 #include "actions_handler_fwd.hpp"
+#include "actions_result_queue.hpp"
 #include "actions_store.hpp"
 #include "values_metric_data_queue.hpp"
 #include "values_store.hpp"
@@ -43,13 +42,15 @@ class ActionsHandler
   public:
     ActionsHandler(actions::StorePtr m_actions_store,
                    values::StorePtr p_values_store,
-                   values::MetricDataQueueReader && p_queue);
+                   values::MetricDataQueueReader && p_queue_in,
+                   actions::ActionResultQueueWriter && p_queue_out);
     void Run(std::stop_token p_stop_token);
 
   private:
     actions::StorePtr m_actions_store{};
     values::StorePtr m_values_store{};
-    values::MetricDataQueueReader m_queue{};
+    values::MetricDataQueueReader m_queue_in{};
+    actions::ActionResultQueueWriter m_queue_out{};
 };
 
 using ActionsHandlerPtr = std::shared_ptr<ActionsHandler>;

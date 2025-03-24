@@ -69,13 +69,23 @@ size_type mqtt_publisher::ProcessInQueue(size_type spin,
     int mid = 0;
     for(const auto & value : p_queue_data)
     {
-      publish(&mid,
-              value.topic.c_str(),
-              static_cast<int>(value.data.size()),
-              value.data.c_str(),
-              m_qos,
-              m_retain);
       m_in_flight.fetch_add(size_type{1});
+      spdlog::debug("Publisher: topic=[{}] payload=[{}]",
+                    value.topic,
+                    value.data);
+
+      if(auto rv = publish(&mid,
+                        value.topic.c_str(),
+                        static_cast<int>(value.data.size()),
+                        value.data.c_str(),
+                        m_qos,
+                        m_retain);
+         MOSQ_ERR_SUCCESS != rv)
+      {
+        spdlog::warn("mqtt_publisher::ProcessInQueue(): 4 rv=[{}] msg=[{}]",
+                      rv,
+                      mosquitto_strerror(rv));
+      }
     }
   }
 
@@ -95,6 +105,7 @@ void mqtt_publisher::Run(std::stop_token p_stop_token)
 
   actions::ActionResultVector l_queue_data{};
   size_type spin = 1; // Set to 1 to prevent spinning at startup.
+
   while(!p_stop_token.stop_requested())
   {
     spin = ProcessInQueue(spin, l_queue_data);
@@ -114,9 +125,9 @@ void mqtt_publisher::Run(std::stop_token p_stop_token)
     std::this_thread::sleep_for(default_shutdown_spin_delay);
   }
 
-  loop_stop();
-
   disconnect();
+
+  loop_stop();
 
   while(is_connected())
   {
@@ -133,10 +144,10 @@ void mqtt_publisher::on_connect(int rc)
 {
   m_is_connected.store(true, std::memory_order_release);
 
-  spdlog::debug("{}[{}]"sv, "MQTT Connected status="sv, rc);
+  spdlog::debug("{}[{}]"sv, "MQTT Publisher Connected status="sv, rc);
 }
 
-void mqtt_publisher::on_publish(int /*mid*/)
+void mqtt_publisher::on_publish(int /* mid */)
 {
   m_in_flight.fetch_sub(size_type{1});
 }

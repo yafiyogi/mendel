@@ -42,6 +42,8 @@ struct mqtt_config final
     bool retain = true;
 };
 
+void configure_mqtt(const YAML::Node & yaml_mqtt,
+                    mqtt_config & config);
 mqtt_config configure_mqtt(const YAML::Node & yaml_mqtt);
 
 } // namespace yafiyogi::mendel

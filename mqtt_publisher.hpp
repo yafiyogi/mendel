@@ -34,7 +34,7 @@
 
 #include "mosquittopp.h"
 
-#include "action_result_queue.hpp"
+#include "actions_result_queue.hpp"
 
 namespace yafiyogi::mendel {
 
@@ -65,7 +65,7 @@ class mqtt_publisher final:
     std::string m_host{};
     int m_port = yy_mqtt::mqtt_default_port;
     actions::ActionResultQueueReader m_queue{};
-    int m_qos = 0;
+    int m_qos = 2;
     std::atomic<size_type> m_in_flight = 0;
     std::atomic<bool> m_is_connected = false;
     bool m_retain = true;
