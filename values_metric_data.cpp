@@ -28,9 +28,22 @@
 
 namespace yafiyogi::values {
 
-MetricData::MetricData(MetricId && p_id) noexcept:
+MetricData::MetricData(const MetricId & p_id) noexcept:
   m_id(std::move(p_id))
 {
+}
+
+void MetricData::swap(MetricData & other) noexcept
+{
+  if(this != &other)
+  {
+    std::swap(m_id, other.m_id);
+    std::swap(m_labels, other.m_labels);
+    std::swap(m_timestamp, other.m_timestamp);
+    std::swap(m_value, other.m_value);
+    std::swap(m_binary, other.m_binary);
+    std::swap(m_value_type, other.m_value_type);
+  }
 }
 
 } // namespace yafiyogi::values

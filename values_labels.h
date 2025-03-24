@@ -85,6 +85,14 @@ class Labels final
       m_labels.visit(std::forward<Visitor>(visitor));
     }
 
+    constexpr void swap(Labels & other) noexcept
+    {
+      if(this != &other)
+      {
+        std::swap(m_labels, other.m_labels);
+      }
+    }
+
   private:
     LabelStore m_labels{};
 };

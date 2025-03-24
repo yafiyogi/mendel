@@ -48,7 +48,8 @@ Metric::Metric(MetricId && p_id,
                LabelActions && p_label_actions,
                ValueActions && p_value_actions,
                LabelActions && p_metric_property_actions):
-  m_metric_data(std::move(p_id)),
+  m_id(std::move(p_id)),
+  m_metric_data(m_id),
   m_property(std::move(p_property)),
   m_label_actions(std::move(p_label_actions)),
   m_value_actions(std::move(p_value_actions)),
@@ -59,7 +60,7 @@ Metric::Metric(MetricId && p_id,
 
 const MetricId & Metric::Id() const noexcept
 {
-  return m_metric_data.Id();
+  return m_id;
 }
 
 const std::string & Metric::Property() const noexcept
@@ -79,6 +80,7 @@ void Metric::Event(std::string_view p_value,
                 m_property,
                 p_value);
 
+  m_metric_data.Id() = m_id;
   m_metric_data.Value(p_value);
   m_metric_data.Type(p_value_type);
   m_metric_data.Timestamp(p_timestamp);
@@ -104,7 +106,7 @@ void Metric::Event(std::string_view p_value,
     action->Apply(m_metric_data, p_value_type);
   }
 
-  if(spdlog::level::debug == spdlog::get_level())
+  if(spdlog::level::debug >= spdlog::get_level())
   {
     m_metric_data.Labels().visit([](const auto & label,
                                     const auto & value) {
@@ -112,7 +114,7 @@ void Metric::Event(std::string_view p_value,
     });
   }
 
-  p_metric_data->emplace_back(m_metric_data);
+  p_metric_data->swap_data_back(m_metric_data);
 }
 
 } // namespace yafiyogi::values

@@ -73,6 +73,7 @@ class Metric final
                MetricDataVectorPtr p_metric_data);
 
   private:
+    MetricId m_id{};
     MetricData m_metric_data{};
     std::string m_property{};
 

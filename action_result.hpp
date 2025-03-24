@@ -35,10 +35,13 @@ struct ActionResult final
     std::string topic{};
     std::string data{};
 
-    void swap(ActionResult & b)
+    void swap(ActionResult & other)
     {
-      std::swap(topic, b.topic);
-      std::swap(data, b.data);
+      if(this != &other)
+      {
+        std::swap(topic, other.topic);
+        std::swap(data, other.data);
+      }
     }
 };
 

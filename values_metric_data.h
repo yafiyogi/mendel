@@ -45,7 +45,7 @@ class MetricData final
 {
   public:
     using binary_type = std::variant<double, int64_t, bool>;
-    MetricData(MetricId && p_id) noexcept;
+    MetricData(const MetricId & p_id) noexcept;
 
     constexpr MetricData() noexcept = default;
     constexpr MetricData(const MetricData &) noexcept = default;
@@ -147,6 +147,8 @@ class MetricData final
     {
       m_value_type = p_value_type;
     }
+
+    void swap(MetricData & other) noexcept;
 
   private:
     MetricId m_id{};
