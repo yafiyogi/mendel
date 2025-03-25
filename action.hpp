@@ -62,6 +62,8 @@ class Action
                      ActionResultVector & p_results,
                      values::Store & p_values_store,
                      timestamp_type p_timestamp) noexcept = 0;
+    virtual const std::string_view Id() const noexcept = 0;
+    virtual const std::string_view Name() const noexcept = 0;
 };
 
 using ActionPtr = std::unique_ptr<Action>;

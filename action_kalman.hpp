@@ -90,10 +90,8 @@ class KalmanAction final:
              values::Store & p_values_store,
              timestamp_type p_timestamp) noexcept override;
 
-    constexpr const std::string & Id() const noexcept
-    {
-      return m_id;
-    }
+    const std::string_view Id() const noexcept override;
+    const std::string_view Name() const noexcept override;
 
   private:
     using ekf = yy_maths::ekf;

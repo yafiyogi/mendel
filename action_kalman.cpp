@@ -78,9 +78,9 @@ KalmanAction::KalmanAction(std::string_view p_id,
                                          output_id,
                                          calc_output_value_id(output_id),
                                          idx_n);
-      spdlog::debug("   output: [{}] value_id:[{}]"sv,
-                    iter->property,
-                    iter->value_id);
+      spdlog::info("    output: [{}] value_id:[{}]"sv,
+                   iter->property,
+                   iter->value_id);
 
       ++idx_n;
     }
@@ -98,9 +98,9 @@ KalmanAction::KalmanAction(std::string_view p_id,
       if(auto [output, output_found] = yy_data::find_iter(m_outputs, output_id);
          output_found)
       {
-        spdlog::debug("   input: [{}] out=[{}]"sv,
-                      input_id,
-                      output->property);
+        spdlog::info("    input: [{}] out=[{}]"sv,
+                     input_id,
+                     output->property);
 
         m_inputs.emplace(input.iter, input_id, idx_m, output->output_idx);
         ++idx_m;
@@ -137,16 +137,9 @@ void KalmanAction::Run(const ParamVector & p_params,
       auto & [input_value_id, input_idx, output_idx] = *input;
 
       auto set_observation = [&input_value_id, input_idx, this](double value) {
-        spdlog::debug("kalman: [{}] [{}]=[{:.2f}]"sv, m_id, input_value_id, value);
+        spdlog::debug("  parameter [{}] value [{:.2f}]"sv, input_value_id, value);
         m_observations(input_idx) = value;
       };
-
-      auto & data_str = param->Value();
-      auto dot_pos = data_str.find_first_of(".");
-      if(std::string::npos == dot_pos)
-      {
-        dot_pos = data_str.size();
-      }
 
       std::visit(set_observation, param->Binary());
 
@@ -158,14 +151,14 @@ void KalmanAction::Run(const ParamVector & p_params,
 
   if(do_calc)
   {
-    spdlog::debug("kalman: [{}] values [{:.0f}]"sv, m_id, m_h);
+    spdlog::debug("  mappings: [{:.0f}]"sv, m_h);
 
-    spdlog::debug("kalman: [{}] previous [{:.2f}]"sv, m_id, m_ekf.X());
+    spdlog::debug("  previous: [{:.2f}]"sv, m_ekf.X());
       m_ekf.predict();
 
-    spdlog::debug("kalman: [{}]   inputs [{:.2f}]"sv, m_id, m_observations);
+    spdlog::debug("  inputs  : [{:.2f}]"sv, m_observations);
     m_ekf.update(m_observations, m_h, m_hx);
-    spdlog::debug("kalman: [{}]  outputs [{:.2f}]"sv, m_id, m_ekf.X());
+    spdlog::debug("  outputs : [{:.2f}]"sv, m_ekf.X());
 
     m_result.topic = m_output_topic;
     m_result.data = "{"sv;
@@ -191,10 +184,20 @@ void KalmanAction::Run(const ParamVector & p_params,
                    g_timestamp_format,
                    std::chrono::duration_cast<std::chrono::microseconds>(p_timestamp).count());
 
-    spdlog::debug("kalman: [{}] json=[{}]"sv, m_id, m_result.data);
+    spdlog::debug("  result  : json=[{}]"sv, m_result.data);
 
     p_results.swap_data_back(m_result);
   }
+}
+
+const std::string_view KalmanAction::Id() const noexcept
+{
+  return m_id;
+}
+
+const std::string_view KalmanAction::Name() const noexcept
+{
+  return "Kalman Filter"sv;
 }
 
 } // namespace yafiyogi::actions

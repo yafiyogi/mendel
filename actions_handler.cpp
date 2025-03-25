@@ -26,13 +26,16 @@
 
 #include <chrono>
 
-#include "fmt/format.h"
+#include "spdlog/spdlog.h"
 
 #include "action.hpp"
 #include "actions_handler.hpp"
 #include "values_metric_labels.hpp"
 
 namespace yafiyogi::mendel {
+
+using namespace std::string_view_literals;
+
 namespace {
 
 class NullAction final:
@@ -44,6 +47,16 @@ class NullAction final:
              values::Store & /* store */,
              timestamp_type /* timestamp */) noexcept override
     {
+    }
+
+    const std::string_view Id() const noexcept override
+    {
+      return "(null)"sv;
+    }
+
+    const std::string_view Name() const noexcept override
+    {
+      return "Null Action"sv;
     }
 };
 
@@ -68,6 +81,9 @@ struct ActionValue final
              actions::ActionResultVector & p_results,
              timestamp_type timestamp)
     {
+      spdlog::debug("Processing action=[{}] id=[{}]",
+                    action->Name(),
+                    action->Id());
       action->Run(values, p_results, p_value_store, timestamp);
     }
 
