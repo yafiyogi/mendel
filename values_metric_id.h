@@ -54,6 +54,17 @@ class MetricId final
       return std::tie(m_id, m_location) == std::tie(other.m_id, other.m_location);
     }
 
+    constexpr int compare(const MetricId & other) const noexcept
+    {
+      if(int comp = m_id.compare(other.m_id);
+         0 != comp)
+      {
+        return comp;
+      }
+
+      return m_location.compare(other.m_location);
+    }
+
     constexpr const std::string & Id() const noexcept
     {
       return m_id;
