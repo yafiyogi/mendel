@@ -30,6 +30,7 @@
 
 #include "action.hpp"
 #include "actions_handler.hpp"
+#include "values_metric_id_fmt.hpp"
 #include "values_metric_labels.hpp"
 
 namespace yafiyogi::mendel {
@@ -84,11 +85,11 @@ struct ActionValue final
       spdlog::debug("Processing action=[{}] id=[{}]",
                     action->Name(),
                     action->Id());
-      action->Run(values, p_results, p_value_store, timestamp);
+      action->Run(params, p_results, p_value_store, timestamp);
     }
 
     actions::ActionObsPtr action = g_null_action;
-    actions::ParamVector values{};
+    actions::ParamVector params{};
 };
 
 using ActionValueVector = yy_quad::simple_vector<ActionValue>;
@@ -139,13 +140,14 @@ void ActionsHandler::Run(std::stop_token p_stop_token)
               action_iter = std::move(iter);
             }
 
-            auto & values = action_iter->values;
+            auto & params = action_iter->params;
 
-            values::MetricDataObsPtr data_ptr{&data};
-            if(auto [data_iter, data_found] = yy_data::find_iter(values, data_ptr);
-               !data_found)
+            if(auto [param_iter, param_found] = yy_data::find_iter(params, data.Id(), actions::actions_detail::compare_param);
+               !param_found)
             {
-              values.emplace(data_iter, data_ptr);
+              values::MetricDataObsPtr param{&data};
+
+              params.emplace(param_iter, param);
             }
           }
         };
