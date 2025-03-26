@@ -71,6 +71,7 @@ struct InputMapping
     values::MetricId value_id{};
     size_type input_idx = 0;
     size_type output_idx = 0;
+    bool initialized = false;
 };
 
 } // namespace kalman_action_detail
@@ -95,11 +96,12 @@ class KalmanAction final:
 
   private:
     using ekf = yy_maths::ekf;
+    using value_type = ekf::value_type;
+    using size_type = ekf::size_type;
     using matrix = ekf::matrix;
     using zero_matrix = ekf::zero_matrix;
     using vector = ekf::vector;
     using zero_vector = ekf::zero_vector;
-    using size_type = ekf::size_type;
 
     std::string m_id;
     std::string m_output_topic{};
@@ -116,6 +118,8 @@ class KalmanAction final:
     InputMap m_inputs{};
 
     ActionResult m_result{};
+    timestamp_type m_last_predict{};
+    bool m_initialized = false;
 };
 
 } // namespace yafiyogi::actions

@@ -56,6 +56,8 @@ constexpr auto g_json_property_format{"\"{}\":{:.2f},"_cf};
 constexpr auto g_timestamp_format{"\"utc_micros\":{}}}"_cf};
 constexpr auto g_ouput_value_id{"{}:{}"_cf};
 
+constexpr auto g_predict_interval{timestamp_type{std::chrono::seconds(60)}};
+
 } // anonymous
 
 KalmanAction::KalmanAction(std::string_view p_id,
@@ -115,7 +117,6 @@ KalmanAction::KalmanAction(std::string_view p_id,
   m_observations.resize(m_ekf.M());
 }
 
-
 void KalmanAction::Run(const ParamVector & p_params,
                        ActionResultVector & p_results,
                        values::Store & p_values_store,
@@ -126,68 +127,127 @@ void KalmanAction::Run(const ParamVector & p_params,
   // Zero vector predicted values hx
   m_hx = zero_vector{m_ekf.M()};
 
-  bool do_calc = false;
+  auto timestamp_seconds{std::chrono::duration_cast<timestamp_type>(std::chrono::duration_cast<std::chrono::seconds>(p_timestamp))};
 
-  // Only update changed values.
-  for(auto param : p_params)
+  bool l_initialized = m_initialized;
+  if(0 == m_last_predict.count())
   {
-    if(auto [input, found] = yy_data::find_iter(m_inputs, param->Id());
-       found)
-    {
-      auto & [input_value_id, input_idx, output_idx] = *input;
-
-      auto set_observation = [&input_value_id, input_idx, this](double value) {
-        spdlog::debug("  parameter [{}] value [{:.2f}]"sv, input_value_id, value);
-        m_observations(input_idx) = value;
-      };
-
-      std::visit(set_observation, param->Binary());
-
-      m_h(input_idx, output_idx) = 1.0;
-      m_hx(input_idx) = m_ekf.X(output_idx);
-      do_calc = true;
-    }
+    m_last_predict = std::chrono::duration_cast<timestamp_type>(std::chrono::duration_cast<std::chrono::minutes>(timestamp_seconds));
   }
 
-  if(do_calc)
+  bool do_predict = (timestamp_seconds - m_last_predict) >= g_predict_interval;
+
+  auto set_observation = [](std::string_view source,
+                            const values::MetricId input_value_id,
+                            value_type & z,
+                            double value) {
+    spdlog::debug("  {} [{}] value [{:.2f}]"sv, source, input_value_id, value);
+    z = value;
+  };
+
+  for(auto & input : m_inputs)
   {
-    spdlog::debug("  mappings: [{:.0f}]"sv, m_h);
-
-    spdlog::debug("  previous: [{:.2f}]"sv, m_ekf.X());
-      m_ekf.predict();
-
-    spdlog::debug("  inputs  : [{:.2f}]"sv, m_observations);
-    m_ekf.update(m_observations, m_h, m_hx);
-    spdlog::debug("  outputs : [{:.2f}]"sv, m_ekf.X());
-
-    m_result.topic = m_output_topic;
-    m_result.data = "{"sv;
-
-    for(auto & output : m_outputs)
+    if(const auto [param_iter, param_found] = yy_data::find_iter(p_params, input.value_id, actions_detail::compare_param);
+       param_found)
     {
-      auto ekf_Xn = m_ekf.X(output.output_idx);
+      input.initialized = true;
 
-      auto add_value_to_store = [&ekf_Xn](auto p_value) {
-        p_value->store(ekf_Xn, std::memory_order_release);
+      m_h(input.input_idx, input.output_idx) = 1.0;
+      m_hx(input.input_idx) = m_ekf.X(input.output_idx);
+      auto & z = m_observations(input.input_idx);
+
+      auto param_set_observation = [&input, &z, &set_observation](auto value) {
+        set_observation("parameter"sv,
+                        input.value_id,
+                        z,
+                        value);
       };
 
-      std::ignore = p_values_store.Find(add_value_to_store, output.value_id);
-
-      fmt::format_to(std::back_inserter(m_result.data),
-                     g_json_property_format,
-                     output.property,
-                     ekf_Xn);
-
+      std::visit(param_set_observation, (*param_iter)->Binary());
     }
+    else if(do_predict && input.initialized)
+    {
+      auto store_set_observation = [this, &input, &set_observation](auto value) {
+        m_h(input.input_idx, input.output_idx) = 1.0;
+        m_hx(input.input_idx) = m_ekf.X(input.output_idx);
+        auto & z = m_observations(input.input_idx);
+
+        set_observation("store"sv,
+                        input.value_id,
+                        z,
+                        value->load(std::memory_order_acquire));
+      };
+
+      std::ignore = p_values_store.Find(store_set_observation, input.value_id);
+    }
+
+    l_initialized = l_initialized || input.initialized;
+  }
+
+  if(!m_initialized && l_initialized)
+  {
+    // Produce the first prediction when all the inputs have been recieved
+    do_predict = true;
+    for(const auto & input : m_inputs)
+    {
+      if(const auto [param_iter, param_found] = yy_data::find_iter(p_params, input.value_id, actions_detail::compare_param);
+         !param_found)
+      {
+        auto store_set_observation = [this, &input, &set_observation](auto value) {
+          m_h(input.input_idx, input.output_idx) = 1.0;
+          m_hx(input.input_idx) = m_ekf.X(input.output_idx);
+          auto & z = m_observations(input.input_idx);
+
+          set_observation("store"sv,
+                          input.value_id,
+                          z,
+                          value->load(std::memory_order_acquire));
+        };
+
+        std::ignore = p_values_store.Find(store_set_observation, input.value_id);
+      }
+    }
+  }
+  spdlog::debug("  mappings: [{:.0f}]"sv, m_h);
+  spdlog::debug("  previous: [{:.2f}]"sv, m_ekf.X());
+
+  if(do_predict)
+  {
+    m_initialized = l_initialized;
+    m_ekf.predict();
+    m_last_predict = std::chrono::duration_cast<timestamp_type>(std::chrono::duration_cast<std::chrono::minutes>(timestamp_seconds));
+  }
+
+  spdlog::debug("  inputs  : [{:.2f}]"sv, m_observations);
+  m_ekf.update(m_observations, m_h, m_hx);
+  spdlog::debug("  outputs : [{:.2f}]"sv, m_ekf.X());
+
+  m_result.topic = m_output_topic;
+  m_result.data = "{"sv;
+
+  for(auto & output : m_outputs)
+  {
+    auto ekf_Xn = m_ekf.X(output.output_idx);
+
+    auto add_value_to_store = [&ekf_Xn](auto p_value) {
+      p_value->store(ekf_Xn, std::memory_order_release);
+    };
+
+    std::ignore = p_values_store.Find(add_value_to_store, output.value_id);
 
     fmt::format_to(std::back_inserter(m_result.data),
-                   g_timestamp_format,
-                   std::chrono::duration_cast<std::chrono::microseconds>(p_timestamp).count());
-
-    spdlog::debug("  result  : json=[{}]"sv, m_result.data);
-
-    p_results.swap_data_back(m_result);
+                   g_json_property_format,
+                   output.property,
+                   ekf_Xn);
   }
+
+  fmt::format_to(std::back_inserter(m_result.data),
+                 g_timestamp_format,
+                 std::chrono::duration_cast<std::chrono::microseconds>(p_timestamp).count());
+
+  spdlog::debug("  result  : json=[{}]"sv, m_result.data);
+
+  p_results.swap_data_back(m_result);
 }
 
 const std::string_view KalmanAction::Id() const noexcept
