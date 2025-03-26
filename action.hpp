@@ -42,6 +42,14 @@ class Store;
 } // namespace yafiyogi::values
 
 namespace yafiyogi::actions {
+namespace actions_detail {
+
+inline int compare_param(const values::MetricDataObsPtr param, const values::MetricId & target)
+{
+  return param->Id().compare(target);
+}
+
+}
 
 class Store;
 
