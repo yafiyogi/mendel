@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
 
   mendel::set_logger(log_config.filename);
   spdlog::set_level(log_config.level);
-  spdlog::flush_on(spdlog::level::info);
+  spdlog::flush_on(log_config.flush);
 
   const auto & yaml_values = yaml_config["values"sv];
   if(!yaml_values)

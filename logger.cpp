@@ -114,6 +114,7 @@ void stop_log(std::string_view logger_name)
 
 void stop_all_logs()
 {
+  spdlog::shutdown();
   std::unique_lock lck{g_logger_mtx};
   g_logger = logger_ptr{};
 

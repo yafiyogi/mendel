@@ -40,6 +40,7 @@ struct logger_config
 {
     std::string filename;
     spdlog::level::level_enum level = spdlog::level::info;
+    spdlog::level::level_enum flush = spdlog::level::warn;
 };
 
 logger_config configure_logging(const YAML::Node & yaml_logging,

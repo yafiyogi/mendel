@@ -70,6 +70,12 @@ logger_config configure_logging(const YAML::Node & yaml_logging,
     {
       log_config.level = log_levels.lookup(yy_util::to_lower(yy_util::trim(level.value())), spdlog::level::info);
     }
+
+    if(auto flush = yy_util::yaml_get_optional_value<std::string_view>(yaml_logging["flush"sv]);
+       flush.has_value())
+    {
+      log_config.flush = log_levels.lookup(yy_util::to_lower(yy_util::trim(flush.value())), spdlog::level::info);
+    }
   }
 
   return log_config;
