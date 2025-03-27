@@ -28,6 +28,10 @@ echo "\nyy_json"
 cd ../../yy_json/build
 cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} .
 
+echo "\nyy_maths"
+cd ../../yy_maths/build
+cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} .
+
 echo "\nyy_mqtt"
 cd ../../yy_mqtt/build
 cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} .

@@ -30,6 +30,10 @@ echo "\nyy_json"
 cd ../../yy_json/build
 ${YY_MAKE} tidy-all
 
+echo "\nyy_maths"
+cd ../../yy_maths/build
+${YY_MAKE} tidy-all
+
 echo "\nyy_mqtt"
 cd ../../yy_mqtt/build
 ${YY_MAKE} tidy-all
