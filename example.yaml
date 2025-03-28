@@ -1,0 +1,212 @@
+mendel:
+  logging:
+    filename: ./mendel.log
+    level: debug
+    flush: debug
+
+mqtt:
+  host: '<your mqtt server host>'
+  port: <your mqtt server port>
+
+  # The 'handlers' section describes how a MQTT message is
+  # handled.
+  # The two types are
+  # - 'json'  : a JSON value.
+  # - 'value; : one value.
+  # No conversion from text is done.
+  # Expect json looking like:
+  # {
+  #   "battery" : 50,
+  #   "pressure" : 1000.1,
+  #   "temperature" : 15.5,
+  #   "humidity" : 60
+  # }
+
+  # There are two ways to configure properties.
+  # 1) A seqence of property names: [temperature, humidity, pressure, battery]
+  #    These names are the expected JSON property and the property ids used by the metrics.
+  # 2) A map of json pointers and property id used by the metrics:
+  #    {
+  #      '/readings/temperature':'temperature',
+  #      '/readings/humidity':'humidity',
+  #      '/readings/pressure':'pressure'
+  #    }
+  # See https://json.nlohmann.me/features/json_pointer/ for json pointer examples.
+  # N.B. if a property is not in the json, no metric is created.
+
+  handlers:
+    - id: 'air-quality-sensor'
+      type: 'json'
+      properties:
+        ['humidity', 'pm25', 'temperature', 'voc_index']
+
+    - id: 'atmos-sensor'
+      type: 'json'
+      properties:
+        ['humidity', 'pressure', 'temperature']
+
+    - id: 'ice-station-zebra'
+      type: 'json'
+      properties:
+        {'/readings/temperature':'temperature',
+         '/readings/humidity':'humidity',
+         '/readings/pressure':'pressure'}
+
+  # The 'topics' section is where the MQTT subscriptions are defined.
+  # 'subscriptions' allows multiple topics with wildcards ('+' & '#' ).
+  # 'handlers' allows multiple handlers (see above) to process the subscriptions.
+  topics:
+    - id: 'AirQuality'
+      subscriptions:
+        - 'iot21/+/AirQM'
+      handlers:
+        ['air-quality-sensor']
+
+    - id: 'Atmospheric'
+      subscriptions:
+        - 'iot21/+/Temp'
+      handlers:
+        ['atmos-sensor']
+
+    - id: 'ISZ'
+      subscriptions:
+        - 'enviro/ice-station-zebra'
+      handlers:
+        ['ice-station-zebra']
+
+# Values are what are used in the configured actions (See below).
+# - 'value' is the published value name.
+# - 'handlers' These are the handlers from the above handlers section.
+#   - 'handler_id': identifies the handler in the above handlers section.
+#   - 'property': identifies which value is published.
+#   - 'value_actions': value manipulations performed before publishing.
+#     Without any actions, the value from handler are published.
+#     - 'switch'
+#       - 'default': if no match is found this value is used.
+#       - 'mappings': is a map of expected values and published values
+values:
+  - value: 'Humidity'
+    handlers:
+      - handler_id: 'atmos-sensor'
+        property: 'humidity'
+        location: '\2:\3'
+
+      - handler_id: 'air-quality-sensor'
+        property: 'humidity'
+        location: '\2:\3'
+
+      - handler_id: 'ice-station-zebra'
+        property: 'humidity'
+        location: '\2'
+
+  - value: 'Temperature'
+    handlers:
+      - handler_id: 'atmos-sensor'
+        property: 'temperature'
+        location: '\2:\3'
+
+      - handler_id: 'air-quality-sensor'
+        property: 'temperature'
+        location: '\2:\3'
+
+      - handler_id: 'ice-station-zebra'
+        property: 'temperature'
+        location: '\2'
+
+  - value: 'Pressure'
+    handlers:
+      - handler_id: 'atmos-sensor'
+        property: 'pressure'
+        location: '\2:\3'
+
+      - handler_id: 'ice-station-zebra'
+        property: 'pressure'
+        location: '\2'
+
+# Actions are the calculations performed on the values defined above.
+# Each action has:
+# 'action_id' action name.
+# 'type' This can currently only be 'kalman'
+#
+# For the 'kalman' action:
+#   'values' this defined the inputs & outputs of the action.
+#     * 'in': the value input.
+#     * 'out': the action output property name.
+#     * 'accuracy' this is for the Q matrix of the kalman filter.
+#   'output'
+#     * 'topic': The MQTT topic where the json is published.
+#     * 'value_id':
+actions:
+  - action_id: 'kalman-atmos-outside'
+    type: 'kalman'
+    values:
+      - in: 'Temperature:Outside:Temp'
+        out: 'temperature'
+        accuracy: 0.2
+
+      - in: 'Humidity:Outside:Temp'
+        out: 'humidity'
+        accuracy: 2
+
+    output:
+      # This JSON like the below will be published to 'Mendel/Outside/Temp'.
+      # {
+      #   "humidity": 51.39,
+      #   "temperature": 10.37,
+      #   "utc_micros": 1743184849195158
+      #  }
+      topic: 'Mendel/Outside/Temp'
+      value_id: 'Mendel:Outside'
+
+  - action_id: 'kalman-atmos-study'
+    type: 'kalman'
+    values:
+      - in: 'Temperature:Study:Temp'
+        out: 'temperature'
+        accuracy: 0.2
+
+      - in: 'Humidity:Study:Temp'
+        out: 'humidity'
+        accuracy: 2
+
+      - in: 'Temperature:Study:AirQM'
+        out: 'temperature'
+        accuracy: 0.45
+
+      - in: 'Humidity:Study:AirQM'
+        out: 'humidity'
+        accuracy: 4.5
+
+      - in: 'Temperature:ice-station-zebra'
+        out: 'temperature'
+        accuracy: 0.5
+
+      - in: 'Humidity:ice-station-zebra'
+        out: 'humidity'
+        accuracy: 3
+
+    output:
+      topic: 'Mendel/Study/Temp'
+      value_id: 'Mendel:Study'
+
+  - action_id: 'kalman-pressure'
+    type: 'kalman'
+    values:
+      - in: 'Pressure:Front:Temp'
+        out: 'pressure'
+        accuracy: 0.12
+
+      - in: 'Pressure:ice-station-zebra'
+        out: 'pressure'
+        accuracy: 1
+
+    output:
+      topic: 'Mendel/ISZ/Pressure'
+      value_id: 'Mendel:ISZ'
+
+publisher:
+  mqtt:
+    host: '<your mqtt server host>'
+    port: <your mqtt server port>
+    qos: 2
+    retain: yes
