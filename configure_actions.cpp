@@ -77,6 +77,10 @@ void configure_kalman(const YAML::Node & yaml_kalman,
 {
   if(yaml_kalman)
   {
+    auto action_id{yy_util::trim(yy_util::yaml_get_value<std::string_view>(yaml_kalman["action_id"sv]))};
+    spdlog::info("  Configuring Kalman Filter [{}]."sv,
+                 action_id);
+
     actions::KalmanOptions options{};
 
     auto & yaml_values{yaml_kalman["values"sv]};
@@ -85,25 +89,50 @@ void configure_kalman(const YAML::Node & yaml_kalman,
     inputs.reserve(yaml_values.size());
     Outputs outputs{};
 
-    for(const auto & yaml_value : yaml_values)
+    if(yaml_values.IsMap())
     {
-      auto input{yy_util::yaml_get_value<std::string_view>(yaml_value.first)};
-      auto output{yy_util::yaml_get_value<std::string_view>(yaml_value.second)};
-
-      if(!input.empty() && !output.empty())
+      for(const auto & yaml_value : yaml_values)
       {
-        options.emplace(values::MetricId{input}, std::string{output});
-        inputs.emplace_back(std::string{input});
-        outputs.emplace_back(std::string{output});
+        auto input{yy_util::yaml_get_value<std::string_view>(yaml_value.first)};
+        auto output{yy_util::yaml_get_value<std::string_view>(yaml_value.second)};
+
+        if(!input.empty() && !output.empty())
+        {
+          options.emplace_back(values::MetricId{input}, std::string{output});
+
+          inputs.emplace_back(std::string{input});
+          outputs.emplace_back(std::string{output});
+        }
+      }
+    }
+    else if(yaml_values.IsSequence())
+    {
+      for(const auto & yaml_value : yaml_values)
+      {
+        auto input{yy_util::yaml_get_value<std::string_view>(yaml_value["in"sv])};
+        auto output{yy_util::yaml_get_value<std::string_view>(yaml_value["out"sv])};
+
+        if(!input.empty() && !output.empty())
+        {
+          auto optional_accuracy{yy_util::yaml_get_optional_value<double>(yaml_value["accuracy"sv])};
+
+          double accuracy = actions::KalmanAction::EPS;
+          if(optional_accuracy.has_value())
+          {
+            accuracy = optional_accuracy.value();
+            accuracy *= accuracy;
+          }
+
+          options.emplace_back(values::MetricId{input}, std::string{output}, accuracy);
+
+          inputs.emplace_back(std::string{input});
+          outputs.emplace_back(std::string{output});
+        }
       }
     }
 
     if(!options.empty())
     {
-      auto action_id{yy_util::trim(yy_util::yaml_get_value<std::string_view>(yaml_kalman["action_id"sv]))};
-      spdlog::info("  Configuring Kalman Filter [{}]."sv,
-                   action_id);
-
       if(auto yaml_output = yaml_kalman["output"sv];
          yaml_output)
       {
@@ -127,6 +156,11 @@ void configure_kalman(const YAML::Node & yaml_kalman,
 
         actions_builder.Add(std::move(action), inputs);
       }
+    }
+    else
+    {
+      spdlog::info("  [{}] has no options. Not adding."sv,
+                   action_id);
     }
   }
 }

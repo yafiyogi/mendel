@@ -72,16 +72,41 @@ struct InputMapping
     size_type input_idx = 0;
     size_type output_idx = 0;
     bool initialized = false;
+
+    static int compare(const InputMapping & mapping,
+                       const values::MetricId & id)
+    {
+      return mapping.value_id.compare(id);
+    }
 };
 
 } // namespace kalman_action_detail
 
-using KalmanOptions = yy_data::flat_map<values::MetricId, std::string>;
+struct KalmanOption
+{
+    values::MetricId input{};
+    std::string output{};
+    yy_maths::ekf::value_type accuracy{yy_maths::ekf::EPS};
+
+    static int compare(const KalmanOption & option,
+                       const values::MetricId & id)
+    {
+      return option.input.compare(id);
+    }
+};
+
+using KalmanOptions = yy_quad::simple_vector<KalmanOption>;
 
 class KalmanAction final:
       public Action
 {
   public:
+    using ekf = yy_maths::ekf;
+    using value_type = ekf::value_type;
+    using size_type = ekf::size_type;
+
+    static constexpr value_type EPS = yy_maths::ekf::EPS;
+
     KalmanAction(std::string_view p_id,
                  std::string_view p_output_topic,
                  std::string_view p_output_value_id,
@@ -95,9 +120,6 @@ class KalmanAction final:
     const std::string_view Name() const noexcept override;
 
   private:
-    using ekf = yy_maths::ekf;
-    using value_type = ekf::value_type;
-    using size_type = ekf::size_type;
     using matrix = ekf::matrix;
     using zero_matrix = ekf::zero_matrix;
     using vector = ekf::vector;
@@ -118,8 +140,6 @@ class KalmanAction final:
     InputMap m_inputs{};
 
     ActionResult m_result{};
-    timestamp_type m_last_predict{};
-    bool m_initialized = false;
 };
 
 } // namespace yafiyogi::actions

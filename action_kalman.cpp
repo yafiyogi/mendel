@@ -72,7 +72,9 @@ KalmanAction::KalmanAction(std::string_view p_id,
   };
   // Initialise outputs.
   size_type idx_n = 0;
-  p_options.visit([&idx_n, &calc_output_value_id, this](auto & /* input_id */, const auto & output_id) {
+
+  for(const auto & [input_id, output_id, accuracy] : p_options)
+  {
     if(auto output{yy_data::find_iter(m_outputs, output_id)};
        !output.found)
     {
@@ -86,29 +88,43 @@ KalmanAction::KalmanAction(std::string_view p_id,
 
       ++idx_n;
     }
-  });
+  }
 
   // Compact outputs.
   OutputMap{m_outputs}.swap(m_outputs);
 
   // Initialize inputs.
   size_type idx_m = 0;
-  p_options.visit([&idx_m, this](const auto & input_id, const auto & output_id) {
-    if(auto input{yy_data::find_iter(m_inputs, input_id)};
-       !input.found)
+  for(const auto & [input_id, output, accuracy] : p_options)
+  {
+    if(auto [output_iter, output_found] = yy_data::find_iter(m_outputs, output);
+       output_found)
     {
-      if(auto [output, output_found] = yy_data::find_iter(m_outputs, output_id);
-         output_found)
+      auto output_idx = output_iter->output_idx;
+      auto compare_input = [output_idx](const kalman_action_detail::InputMapping & p_mapping,
+                                        const values::MetricId & p_input_id) -> int {
+        int comp = p_mapping.value_id.compare(p_input_id);
+
+        if(comp == 0)
+        {
+          comp = p_mapping.output_idx - output_idx;
+        }
+
+        return comp;
+      };
+
+      if(auto [input_iter, input_found] = yy_data::find_iter(m_inputs, input_id, compare_input);
+         !input_found)
       {
         spdlog::info("    input: [{}] out=[{}]"sv,
                      input_id,
-                     output->property);
+                     output_iter->property);
 
-        m_inputs.emplace(input.iter, input_id, idx_m, output->output_idx);
+        m_inputs.emplace(input_iter, input_id, idx_m, output_iter->output_idx);
         ++idx_m;
       }
     }
-  });
+  }
 
   // Compact inputs.
   InputMap{m_inputs}.swap(m_inputs);
@@ -126,16 +142,6 @@ void KalmanAction::Run(const ParamVector & p_params,
   m_h = zero_matrix{m_ekf.M(), m_ekf.N()};
   // Zero vector predicted values hx
   m_hx = zero_vector{m_ekf.M()};
-
-  auto timestamp_seconds{std::chrono::duration_cast<timestamp_type>(std::chrono::duration_cast<std::chrono::seconds>(p_timestamp))};
-
-  bool l_initialized = m_initialized;
-  if(0 == m_last_predict.count())
-  {
-    m_last_predict = std::chrono::duration_cast<timestamp_type>(std::chrono::duration_cast<std::chrono::minutes>(timestamp_seconds));
-  }
-
-  bool do_predict = (timestamp_seconds - m_last_predict) >= g_predict_interval;
 
   auto set_observation = [](std::string_view source,
                             const values::MetricId input_value_id,
@@ -165,7 +171,7 @@ void KalmanAction::Run(const ParamVector & p_params,
 
       std::visit(param_set_observation, (*param_iter)->Binary());
     }
-    else if(do_predict && input.initialized)
+    else if(input.initialized)
     {
       auto store_set_observation = [this, &input, &set_observation](auto value) {
         m_h(input.input_idx, input.output_idx) = 1.0;
@@ -180,45 +186,14 @@ void KalmanAction::Run(const ParamVector & p_params,
 
       std::ignore = p_values_store.Find(store_set_observation, input.value_id);
     }
-
-    l_initialized = l_initialized || input.initialized;
-  }
-
-  if(!m_initialized && l_initialized)
-  {
-    // Produce the first prediction when all the inputs have been recieved
-    do_predict = true;
-    for(const auto & input : m_inputs)
-    {
-      if(const auto [param_iter, param_found] = yy_data::find_iter(p_params, input.value_id, actions_detail::compare_param);
-         !param_found)
-      {
-        auto store_set_observation = [this, &input, &set_observation](auto value) {
-          m_h(input.input_idx, input.output_idx) = 1.0;
-          m_hx(input.input_idx) = m_ekf.X(input.output_idx);
-          auto & z = m_observations(input.input_idx);
-
-          set_observation("store"sv,
-                          input.value_id,
-                          z,
-                          value->load(std::memory_order_acquire));
-        };
-
-        std::ignore = p_values_store.Find(store_set_observation, input.value_id);
-      }
-    }
-  }
-  spdlog::debug("  mappings: [{:.0f}]"sv, m_h);
-  spdlog::debug("  previous: [{:.2f}]"sv, m_ekf.X());
-
-  if(do_predict)
-  {
-    m_initialized = l_initialized;
-    m_ekf.predict();
-    m_last_predict = std::chrono::duration_cast<timestamp_type>(std::chrono::duration_cast<std::chrono::minutes>(timestamp_seconds));
   }
 
   spdlog::debug("  inputs  : [{:.2f}]"sv, m_observations);
+  spdlog::debug("  mappings: [{:.0f}]"sv, m_h);
+  spdlog::debug("  previous: [{:.2f}]"sv, m_ekf.X());
+
+  m_ekf.predict();
+
   m_ekf.update(m_observations, m_h, m_hx);
   spdlog::debug("  outputs : [{:.2f}]"sv, m_ekf.X());
 
