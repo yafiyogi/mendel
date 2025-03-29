@@ -155,7 +155,7 @@ void ActionsHandler::Run(std::stop_token p_stop_token)
         std::ignore = l_actions_store.Find(add_actions_n_data, data.Id());
       }
 
-      timestamp_type timestamp{std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::utc_clock::now()).time_since_epoch()};
+      timestamp_type timestamp{std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now()).time_since_epoch()};
       for(auto & action : l_actions)
       {
         action.Run(l_values_store, l_action_values, timestamp);
