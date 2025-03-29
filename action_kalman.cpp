@@ -100,14 +100,14 @@ KalmanAction::KalmanAction(std::string_view p_id,
     if(auto [output_iter, output_found] = yy_data::find_iter(m_outputs, output);
        output_found)
     {
-      auto output_idx = output_iter->output_idx;
+      auto output_idx = static_cast<int>(output_iter->output_idx);
       auto compare_input = [output_idx](const kalman_action_detail::InputMapping & p_mapping,
                                         const values::MetricId & p_input_id) -> int {
         int comp = p_mapping.value_id.compare(p_input_id);
 
         if(comp == 0)
         {
-          comp = p_mapping.output_idx - output_idx;
+          comp = static_cast<int>(p_mapping.output_idx) - output_idx;
         }
 
         return comp;
@@ -146,7 +146,7 @@ void KalmanAction::Run(const ParamVector & p_params,
   auto set_observation = [](std::string_view source,
                             const values::MetricId input_value_id,
                             value_type & z,
-                            double value) {
+                            value_type value) {
     spdlog::debug("  {} [{}] value [{:.2f}]"sv, source, input_value_id, value);
     z = value;
   };
@@ -162,7 +162,7 @@ void KalmanAction::Run(const ParamVector & p_params,
       m_hx(input.input_idx) = m_ekf.X(input.output_idx);
       auto & z = m_observations(input.input_idx);
 
-      auto param_set_observation = [&input, &z, &set_observation](auto value) {
+      auto param_set_observation = [&input, &z, &set_observation](value_type value) {
         set_observation("parameter"sv,
                         input.value_id,
                         z,
