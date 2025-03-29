@@ -38,6 +38,6 @@ echo "\nyy_web"
 cd ../yy_web
 git pull origin
 
-echo "\nyy_mqtt_bridge"
+echo "\nmendel"
 cd ../mendel
 git pull origin
