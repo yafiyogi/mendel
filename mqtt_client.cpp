@@ -80,7 +80,7 @@ void mqtt_client::run()
          0 != rc)
       {
         std::this_thread::sleep_for(default_reconnect_delay_seconds);
-        spdlog::info("reconnect [{}]"sv, rc);
+        spdlog::info(" MQTT Client reconnect [{}]"sv, rc);
         reconnect();
       }
     }
@@ -107,14 +107,14 @@ void mqtt_client::on_connect(int rc)
   m_is_connected.store(true, std::memory_order_release);
 
   spdlog::debug("{}[{}]"sv, "MQTT Connected status="sv, rc);
-  spdlog::info("{}"sv, " Subscribing to:"sv);
+  spdlog::info(" {}"sv, "Subscribing to:"sv);
 
   yy_quad::simple_vector<char *> subs{};
   subs.reserve(m_subscriptions.size());
 
   for(auto & sub : m_subscriptions)
   {
-    spdlog::info("{}[{}]"sv, "\t - "sv, sub);
+    spdlog::info(" {}[{}]"sv, "\t - "sv, sub);
 
     subs.emplace_back(sub.data());
   }
@@ -191,7 +191,7 @@ void mqtt_client::on_subscribe(int /* mid */,
 
 void mqtt_client::on_disconnect(int rc)
 {
-  spdlog::info("{}[{}]"sv, "MQTT Client Disconnected status="sv, rc);
+  spdlog::warn(" {}[{}]"sv, "MQTT Client Disconnected status="sv, rc);
 
   m_is_connected.store(false, std::memory_order_release);
 }

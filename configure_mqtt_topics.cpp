@@ -102,14 +102,14 @@ mqtt_topics configure_mqtt_topics(const YAML::Node & yaml_topics,
 
           for(const auto & handler : mqtt_handlers)
           {
-            spdlog::info("     * [{}]"sv, handler->Id());
+            spdlog::info("       * [{}]"sv, handler->Id());
           }
 
           topics_config.add(filter, MqttHandlerList{mqtt_handlers});
-          if(auto [pos, found] = yy_data::find_iter_pos(subscriptions, filter);
+          if(auto [pos, found] = yy_data::find_iter(subscriptions, filter);
              !found)
           {
-            subscriptions.emplace(subscriptions.begin() + pos, std::string{filter});
+            subscriptions.emplace(pos, std::string{filter});
           }
         }
       }

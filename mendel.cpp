@@ -166,12 +166,12 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  spdlog::info("Configure client:"sv);
+  spdlog::info(" Configure client:"sv);
   auto mqtt_config{mendel::configure_mqtt(yaml_mqtt)};
   auto mqtt_client_config{mendel::configure_mqtt_client(yaml_mqtt,
                                                         values_config)};
 
-  spdlog::info("Configure publisher:"sv);
+  spdlog::info(" Configure publisher:"sv);
   auto mqtt_publisher_config{mqtt_config};
   if(const auto & yaml_publisher = yaml_config["publisher"sv];
      yaml_publisher)
@@ -183,7 +183,7 @@ int main(int argc, char* argv[])
     }
   }
 
-  spdlog::info("Configure actions:"sv);
+  spdlog::info(" Configure actions:"sv);
   actions::StorePtr actions_store{};
   values::StorePtr values_store{};
   {
@@ -198,7 +198,7 @@ int main(int argc, char* argv[])
     values_store = values_builder.Create();
   }
 
-  spdlog::info("Mendel ready."sv);
+  spdlog::info(" Mendel ready."sv);
 
   if(!no_run)
   {
@@ -271,7 +271,7 @@ int main(int argc, char* argv[])
     mosqpp::lib_cleanup();
   }
 
-  spdlog::info("Ende"sv);
+  spdlog::info(" Ende"sv);
   mendel::stop_all_logs();
 
   return 0;
