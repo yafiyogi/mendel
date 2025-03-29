@@ -1,0 +1,21 @@
+#!/bin/sh
+
+set -e
+
+if [ -z "${*}" ]
+then
+    echo "No build type!"
+    exit 1
+fi
+
+for build_type in "${@}"
+do
+    build_script="build_${build_type}"
+
+    if [ ! -x "${build_script}" ]
+    then
+        echo "Can't execute [${build_script}]."
+    else
+        ./${build_script}
+    fi
+done
