@@ -132,7 +132,7 @@ values:
 #   'values' this defined the inputs & outputs of the action.
 #     * 'in': the value input.
 #     * 'out': the action output property name.
-#     * 'accuracy' this is for the Q matrix of the kalman filter.
+#     * 'accuracy' (optional) this is for the Q matrix of the kalman filter.
 #   'output'
 #     * 'topic': The MQTT topic where the json is published.
 #     * 'value_id':
