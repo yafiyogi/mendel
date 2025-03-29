@@ -2,7 +2,7 @@
 
 set -e
 
-YY_MAKE="$(which make) -j 4"
+. ./build_config
 
 build_type="$1"
 
@@ -16,63 +16,63 @@ YY_TP_DIR="${HOME}/code/tp"
 
 echo "\nyy_test"
 cd ../yy_test/build
-${YY_MAKE} clean
+if [ -f Makefile ]; then
+    ${YY_MAKE} clean
+fi
 rm -rf ./*
 cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} ..
 make all && make install || exit 1
 
 echo "\nyy_tp_util"
 cd ../../yy_tp_util/build
-${YY_MAKE} clean
+if [ -f Makefile ]; then
+    ${YY_MAKE} clean
+fi
 rm -rf ./*
 cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} ..
 ${YY_MAKE} all && make install || exit 1
 
 echo "\nyy_cpp"
 cd ../../yy_cpp/build
-${YY_MAKE} clean
+if [ -f Makefile ]; then
+    ${YY_MAKE} clean
+fi
 rm -rf ./*
 cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} ..
 ${YY_MAKE} all test && make install || exit 1
 
 echo "\nyy_json"
 cd ../../yy_json/build
-${YY_MAKE} clean
+if [ -f Makefile ]; then
+    ${YY_MAKE} clean
+fi
 rm -rf ./*
 cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} ..
 ${YY_MAKE} all test && make install || exit 1
 
 echo "\nyy_maths"
 cd ../../yy_maths/build
-${YY_MAKE} clean
+if [ -f Makefile ]; then
+    ${YY_MAKE} clean
+fi
 rm -rf ./*
 cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} ..
 ${YY_MAKE} all && make install || exit 1
 
 echo "\nyy_mqtt"
 cd ../../yy_mqtt/build
-${YY_MAKE} clean
+if [ -f Makefile ]; then
+    ${YY_MAKE} clean
+fi
 rm -rf ./*
 cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} ..
 ${YY_MAKE} all test && make install || exit 1
 
-echo "\nyy_prometheus"
-cd ../../yy_prometheus/build
-${YY_MAKE} clean
-rm -rf ./*
-cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} ..
-${YY_MAKE} all && make install || exit 1
-
-echo "\nyy_web"
-cd ../../yy_web/build
-${YY_MAKE} clean
-rm -rf ./*
-cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} ..
-${YY_MAKE} all && make install || exit 1
-
 echo "\nmendel"
 cd ../../mendel/build-dir
-${YY_MAKE} clean
+if [ -f Makefile ]; then
+    ${YY_MAKE} clean
+fi
 rm -rf ./*
 cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} ..
 ${YY_MAKE} all

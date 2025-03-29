@@ -2,7 +2,7 @@
 
 set -e
 
-YY_MAKE="$(which make) -j 4"
+. ./build_config
 
 build_type="$1"
 
@@ -36,14 +36,6 @@ ${YY_MAKE} tidy-all
 
 echo "\nyy_mqtt"
 cd ../../yy_mqtt/build
-${YY_MAKE} tidy-all
-
-echo "\nyy_prometheus"
-cd ../../yy_prometheus/build
-${YY_MAKE} tidy-all
-
-echo "\nyy_web"
-cd ../../yy_web/build
 ${YY_MAKE} tidy-all
 
 echo "\nmendel"

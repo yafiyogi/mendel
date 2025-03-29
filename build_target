@@ -2,8 +2,9 @@
 
 set -e
 
-YY_MAKE="$(which make) -j 4"
-build_dirs="yy_test/build yy_tp_util/build yy_cpp/build yy_json/build yy_maths/build yy_mqtt/build yy_prometheus/build yy_web/build mendel/build-dir"
+. ./build_config
+
+build_dirs="yy_test/build yy_tp_util/build yy_cpp/build yy_json/build yy_maths/build yy_mqtt/build mendel/build-dir"
 dir_prefix=".."
 
 targets="${*}"

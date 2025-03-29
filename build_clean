@@ -2,7 +2,7 @@
 
 set -e
 
-YY_MAKE="$(which make) -j 4"
+. ./build_config
 
 echo "yy_test: cleaning"
 cd ../yy_test/build
@@ -20,20 +20,12 @@ echo "yy_json: cleaning"
 cd ../../yy_json/build
 ${YY_MAKE} clean || exit 1
 
-echo "yy_maths"
+echo "yy_maths: cleaning"
 cd ../../yy_maths/build
 ${YY_MAKE}  clean || exit 1
 
 echo "yy_mqtt: cleaning"
 cd ../../yy_mqtt/build
-${YY_MAKE} clean || exit 1
-
-echo "yy_prometheus: cleaning"
-cd ../../yy_prometheus/build
-${YY_MAKE} clean || exit 1
-
-echo "yy_web: cleaning"
-cd ../../yy_web/build
 ${YY_MAKE} clean || exit 1
 
 echo "mendel: cleaning"

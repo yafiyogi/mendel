@@ -30,14 +30,6 @@ echo "\nyy_mqtt"
 cd ../yy_mqtt
 git pull origin
 
-echo "\nyy_prometheus"
-cd ../yy_prometheus
-git pull origin
-
-echo "\nyy_web"
-cd ../yy_web
-git pull origin
-
 echo "\nmendel"
 cd ../mendel
 git pull origin
