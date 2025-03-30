@@ -43,7 +43,7 @@ using namespace std::string_literals;
 using namespace std::string_view_literals;
 
 mqtt_client_config configure_mqtt_client(const YAML::Node & yaml_mqtt,
-                                  values::MetricsMap & p_values_config)
+                                         values::MetricsMap & p_values_config)
 {
   auto handlers = configure_mqtt_handlers(yaml_mqtt["handlers"sv], p_values_config);
   auto [subscriptions, topics] = configure_mqtt_topics(yaml_mqtt["topics"sv], handlers);

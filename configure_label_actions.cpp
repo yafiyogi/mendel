@@ -117,7 +117,7 @@ void configure_label_action_replace_format(std::string_view replacement_format,
 } // namespace
 
 void configure_label_action_replace_path_format(const YAML::Node & yaml_format,
-                                         ReplacementTopicsConfig & p_topics_config)
+                                                ReplacementTopicsConfig & p_topics_config)
 {
   if(yaml_format)
   {

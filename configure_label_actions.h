@@ -33,7 +33,7 @@
 namespace yafiyogi::values {
 
 void configure_label_action_replace_path_format(const YAML::Node & yaml_format,
-                                         ReplacementTopicsConfig & p_topics_config);
+                                                ReplacementTopicsConfig & p_topics_config);
 ReplacementTopics configure_label_action_replace_path(const YAML::Node & yaml_replace);
 
 } // namespace yafiyogi::values

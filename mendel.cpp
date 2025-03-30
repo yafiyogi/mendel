@@ -207,7 +207,7 @@ int main(int argc, char* argv[])
     // MQTT Publisher
     auto actions_results_queue{std::make_shared<actions::ActionResultQueue>()};
     auto mqtt_publisher{std::make_shared<mendel::mqtt_publisher>(mqtt_publisher_config,
-                                                        actions::ActionResultQueueReader{actions_results_queue})};
+                                                                 actions::ActionResultQueueReader{actions_results_queue})};
 
     std::jthread publisher_thread{[&mqtt_publisher](std::stop_token p_stop_token) {
       mqtt_publisher->Run(p_stop_token);

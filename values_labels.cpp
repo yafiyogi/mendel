@@ -50,10 +50,10 @@ void Labels::clear(yy_data::ClearAction p_clear_action) noexcept
 }
 
 std::string & Labels::set_label(std::string_view p_label,
-                       std::string_view p_value)
+                                std::string_view p_value)
 {
   auto [pos, _] = m_labels.emplace_or_assign(std::string{p_label},
-                                           std::string{p_value});
+                                             std::string{p_value});
 
   return *m_labels.value(pos);
 }

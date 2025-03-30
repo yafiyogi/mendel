@@ -75,16 +75,16 @@ size_type mqtt_publisher::ProcessInQueue(size_type spin,
                     value.data);
 
       if(auto rv = publish(&mid,
-                        value.topic.c_str(),
-                        static_cast<int>(value.data.size()),
-                        value.data.c_str(),
-                        m_qos,
-                        m_retain);
+                           value.topic.c_str(),
+                           static_cast<int>(value.data.size()),
+                           value.data.c_str(),
+                           m_qos,
+                           m_retain);
          MOSQ_ERR_SUCCESS != rv)
       {
         spdlog::warn("mqtt_publisher::ProcessInQueue(): 4 rv=[{}] msg=[{}]",
-                      rv,
-                      mosquitto_strerror(rv));
+                     rv,
+                     mosquitto_strerror(rv));
       }
     }
   }

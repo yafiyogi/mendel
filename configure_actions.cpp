@@ -168,8 +168,8 @@ void configure_kalman(const YAML::Node & yaml_kalman,
 } // anonymous namespace
 
 void configure_actions(const YAML::Node & yaml_actions,
-                                 actions::StoreBuilder & actions_store,
-                                 values::StoreBuilder & values_store)
+                       actions::StoreBuilder & actions_store,
+                       values::StoreBuilder & values_store)
 {
   actions::StoreBuilder actions{};
 

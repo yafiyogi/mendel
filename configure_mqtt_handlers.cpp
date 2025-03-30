@@ -106,7 +106,7 @@ MqttHandlerPtr configure_json_handler(std::string_view p_id,
     properties.reserve(yaml_properties.size());
 
     spdlog::trace("        [line {}]."sv,
-                   yaml_properties.Mark().line + 1);
+                  yaml_properties.Mark().line + 1);
     if(const bool is_sequence = yaml_properties.IsSequence();
        is_sequence || yaml_properties.IsMap())
     {
