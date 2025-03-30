@@ -66,10 +66,10 @@ void configure_mqtt(const YAML::Node & yaml_mqtt,
   auto retain{yy_util::to_lower(yy_util::trim(yy_util::yaml_get_value<std::string_view>(yaml_mqtt["retain"sv], "yes")))};
   config.retain = bool_types.lookup(retain);
 
-  spdlog::info("  host  : [{}]"sv, config.host);
-  spdlog::info("  port  : [{}]"sv, config.port);
-  spdlog::info("  qos   : [{}]"sv, config.qos);
-  spdlog::info("  retain: [{}]"sv, retain);
+  spdlog::info("   host  : [{}]"sv, config.host);
+  spdlog::info("   port  : [{}]"sv, config.port);
+  spdlog::info("   qos   : [{}]"sv, config.qos);
+  spdlog::info("   retain: [{}]"sv, retain);
 }
 
 mqtt_config configure_mqtt(const YAML::Node & yaml_mqtt)
