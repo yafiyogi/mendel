@@ -131,6 +131,9 @@ KalmanAction::KalmanAction(std::string_view p_id,
 
   m_ekf = yy_maths::ekf{m_inputs.size(), m_outputs.size()};
   m_observations.resize(m_ekf.M());
+
+  // Zero mapping sensor-function Jacobian matrix h.
+  m_h = zero_matrix{m_ekf.M(), m_ekf.N()};
 }
 
 void KalmanAction::Run(const ParamVector & p_params,
@@ -138,8 +141,6 @@ void KalmanAction::Run(const ParamVector & p_params,
                        values::Store & p_values_store,
                        timestamp_type p_timestamp) noexcept
 {
-  // Zero mapping sensor-function Jacobian matrix h.
-  m_h = zero_matrix{m_ekf.M(), m_ekf.N()};
   // Zero vector predicted values hx
   m_hx = zero_vector{m_ekf.M()};
 
@@ -174,7 +175,6 @@ void KalmanAction::Run(const ParamVector & p_params,
     else if(input.initialized)
     {
       auto store_set_observation = [this, &input, &set_observation](auto value) {
-        m_h(input.input_idx, input.output_idx) = 1.0;
         m_hx(input.input_idx) = m_ekf.X(input.output_idx);
         auto & z = m_observations(input.input_idx);
 
@@ -189,11 +189,10 @@ void KalmanAction::Run(const ParamVector & p_params,
   }
 
   spdlog::debug("  inputs  : [{:.2f}]"sv, m_observations);
-  spdlog::debug("  mappings: [{:.0f}]"sv, m_h);
+  //spdlog::debug("  mappings: [{:.0f}]"sv, m_h);
   spdlog::debug("  previous: [{:.2f}]"sv, m_ekf.X());
 
   m_ekf.predict();
-
   m_ekf.update(m_observations, m_h, m_hx);
   spdlog::debug("  outputs : [{:.2f}]"sv, m_ekf.X());
 
