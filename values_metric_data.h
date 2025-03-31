@@ -150,6 +150,11 @@ class MetricData final
 
     void swap(MetricData & other) noexcept;
 
+    friend void swap(MetricData & lhs, MetricData & rhs) noexcept
+    {
+      lhs.swap(rhs);
+    }
+
   private:
     MetricId m_id{};
     values::Labels m_labels{};

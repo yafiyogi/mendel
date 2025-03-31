@@ -35,13 +35,18 @@ struct ActionResult final
     std::string topic{};
     std::string data{};
 
-    void swap(ActionResult & other)
+    constexpr void swap(ActionResult & other) noexcept
     {
       if(this != &other)
       {
         std::swap(topic, other.topic);
         std::swap(data, other.data);
       }
+    }
+
+    friend constexpr void swap(ActionResult & lhs, ActionResult & rhs) noexcept
+    {
+      lhs.swap(rhs);
     }
 };
 

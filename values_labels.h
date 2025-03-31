@@ -93,6 +93,11 @@ class Labels final
       }
     }
 
+    friend constexpr void swap(Labels & lhs, Labels & rhs) noexcept
+    {
+      lhs.swap(rhs);
+    }
+
   private:
     LabelStore m_labels{};
 };
