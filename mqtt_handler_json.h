@@ -34,10 +34,11 @@
 #include "yy_json/yy_json_pointer.h"
 #include "yy_mqtt/yy_mqtt_types.h"
 
+#include "yy_values/yy_value_type.hpp"
+#include "yy_values/yy_values_metric.hpp"
+#include "yy_values/yy_values_metric_data.hpp"
+
 #include "mqtt_handler.h"
-#include "value_type.h"
-#include "values_metric.h"
-#include "values_metric_data.h"
 
 namespace yafiyogi::mendel {
 namespace json_handler_detail {
@@ -45,8 +46,8 @@ namespace json_handler_detail {
 class JsonVisitor
 {
   public:
-    using MetricDataVector = values::MetricDataVector;
-    using Metrics = values::Metrics;
+    using MetricDataVector = yy_values::MetricDataVector;
+    using Metrics = yy_values::Metrics;
 
     constexpr JsonVisitor() noexcept = default;
     constexpr JsonVisitor(const JsonVisitor &) noexcept = default;
@@ -76,41 +77,41 @@ class JsonVisitor
     }
 
     void levels(const yy_mqtt::TopicLevelsView * p_levels) noexcept;
-    void metric_data(values::MetricDataVectorPtr p_metric_data) noexcept;
+    void metric_data(yy_values::MetricDataVectorPtr p_metric_data) noexcept;
     void topic(const std::string_view p_topic) noexcept;
     void timestamp(const timestamp_type p_timestamp) noexcept;
 
     void apply_str(Metrics & metrics,
                    std::string_view str)
     {
-      apply(metrics, str, values::ValueType::String);
+      apply(metrics, str, yy_values::ValueType::String);
     }
 
     void apply_int64(Metrics & metrics,
                      std::string_view raw,
                      std::int64_t /* num */)
     {
-      apply(metrics, raw, values::ValueType::Int);
+      apply(metrics, raw, yy_values::ValueType::Int);
     }
 
     void apply_uint64(Metrics & metrics,
                       std::string_view raw,
                       std::uint64_t /* num */)
     {
-      apply(metrics, raw, values::ValueType::UInt);
+      apply(metrics, raw, yy_values::ValueType::UInt);
     }
 
     void apply_double(Metrics & metrics,
                       std::string_view raw,
                       double /* num */)
     {
-      apply(metrics, raw, values::ValueType::Float);
+      apply(metrics, raw, yy_values::ValueType::Float);
     }
 
     void apply_bool(Metrics & metrics,
                     bool flag)
     {
-      apply(metrics, flag ? g_true_str : g_false_str, values::ValueType::Bool);
+      apply(metrics, flag ? g_true_str : g_false_str, yy_values::ValueType::Bool);
     }
 
     constexpr void reset() noexcept
@@ -124,14 +125,14 @@ class JsonVisitor
   private:
     void apply(Metrics & p_metrics,
                std::string_view p_data,
-               values::ValueType p_value_type);
+               yy_values::ValueType p_value_type);
 
     static constexpr const std::string_view g_true_str{"true"};
     static constexpr const std::string_view g_false_str{"false"};
     static const yy_mqtt::TopicLevelsView g_empty_levels;
 
     yy_data::observer_ptr<std::add_const_t<yy_mqtt::TopicLevelsView>> m_levels{&g_empty_levels};
-    values::MetricDataVectorPtr m_metric_data{};
+    yy_values::MetricDataVectorPtr m_metric_data{};
     timestamp_type m_timestamp{};
     std::string_view m_topic{};
 };
@@ -142,8 +143,8 @@ class MqttJsonHandler final:
       public MqttHandler
 {
   public:
-    using MetricDataVector = values::MetricDataVector;
-    using builder_type = yy_json::json_pointer_builder<values::Metrics, json_handler_detail::JsonVisitor>;
+    using MetricDataVector = yy_values::MetricDataVector;
+    using builder_type = yy_json::json_pointer_builder<yy_values::Metrics, json_handler_detail::JsonVisitor>;
     using handler_type = builder_type::handler_type;
     using handler_config_type = handler_type::pointers_config_type;
     using parser_type = boost::json::basic_parser<handler_type>;
@@ -165,7 +166,7 @@ class MqttJsonHandler final:
                const std::string_view p_topic,
                const yy_mqtt::TopicLevelsView & p_levels,
                const timestamp_type p_timestamp,
-               values::MetricDataVectorPtr p_metric_data) noexcept override;
+               yy_values::MetricDataVectorPtr p_metric_data) noexcept override;
 
   private:
     parser_type m_parser;

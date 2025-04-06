@@ -34,7 +34,7 @@
 
 #include "yy_maths/yy_matrix_fmt.hpp"
 
-#include "values_metric_id_fmt.hpp"
+#include "yy_values/yy_values_metric_id_fmt.hpp"
 
 #include "action_kalman.hpp"
 #include "values_store.hpp"
@@ -67,8 +67,8 @@ KalmanAction::KalmanAction(std::string_view p_id,
   m_id(std::move(p_id)),
   m_output_topic(std::move(p_output_topic))
 {
-  auto calc_output_value_id = [&p_output_value_id](auto property) -> values::MetricId {
-    return values::MetricId(fmt::format(g_ouput_value_id, p_output_value_id, property));
+  auto calc_output_value_id = [&p_output_value_id](auto property) -> yy_values::MetricId {
+    return yy_values::MetricId(fmt::format(g_ouput_value_id, p_output_value_id, property));
   };
   // Initialise outputs.
   size_type idx_n = 0;
@@ -102,7 +102,7 @@ KalmanAction::KalmanAction(std::string_view p_id,
     {
       auto output_idx = static_cast<int>(output_iter->output_idx);
       auto compare_input = [output_idx](const kalman_action_detail::InputMapping & p_mapping,
-                                        const values::MetricId & p_input_id) -> int {
+                                        const yy_values::MetricId & p_input_id) -> int {
         int comp = p_mapping.value_id.compare(p_input_id);
 
         if(comp == 0)
@@ -145,7 +145,7 @@ void KalmanAction::Run(const ParamVector & p_params,
   m_hx = zero_vector{m_ekf.M()};
 
   auto set_observation = [](std::string_view source,
-                            const values::MetricId input_value_id,
+                            const yy_values::MetricId input_value_id,
                             value_type & z,
                             value_type value) {
     spdlog::debug("  {} [{}] value [{:.2f}]"sv, source, input_value_id, value);

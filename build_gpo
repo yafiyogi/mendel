@@ -30,6 +30,10 @@ echo "\nyy_mqtt"
 cd ../yy_mqtt
 git pull origin
 
+echo "\nyy_values"
+cd ../../yy_values/build
+git pull origin
+
 echo "\nmendel"
 cd ../mendel
 git pull origin

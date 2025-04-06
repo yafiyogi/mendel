@@ -28,12 +28,13 @@
 
 #include "yy_tp_util/yaml_fwd.h"
 
+#include "yy_values/yy_values_metric.hpp"
+
 #include "mqtt_handler_fwd.h"
-#include "values_metric.h"
 
 namespace yafiyogi::mendel {
 
 MqttHandlerStore configure_mqtt_handlers(const YAML::Node & yaml_handlers,
-                                         values::MetricsMap & value_config);
+                                         yy_values::MetricsMap & value_config);
 
 } // namespace yafiyogi::mendel

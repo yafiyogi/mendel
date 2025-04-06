@@ -31,11 +31,12 @@
 #include "yy_cpp/yy_types.hpp"
 #include "yy_mqtt/yy_mqtt_types.h"
 
+#include "yy_values/yy_values_labels.hpp"
+#include "yy_values/yy_values_metric_data.hpp"
+#include "yy_values/yy_values_metric.hpp"
+
 #include "mqtt_handler_fwd.h"
 
-#include "values_labels.h"
-#include "values_metric_data.h"
-#include "values_metric.h"
 
 namespace yafiyogi::mendel {
 
@@ -86,7 +87,7 @@ class MqttHandler
                        const std::string_view p_topic,
                        const yy_mqtt::TopicLevelsView & p_levels ,
                        const timestamp_type p_timestamp,
-                       values::MetricDataVectorPtr p_metric_data) noexcept = 0;
+                       yy_values::MetricDataVectorPtr p_metric_data) noexcept = 0;
   private:
     std::string m_handler_id{};
     type m_type = type::Text;

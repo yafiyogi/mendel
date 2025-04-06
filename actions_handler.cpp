@@ -28,10 +28,10 @@
 
 #include "spdlog/spdlog.h"
 
+#include "yy_values/yy_values_metric_id_fmt.hpp"
+#include "yy_values/yy_values_metric_labels.hpp"
 #include "action.hpp"
 #include "actions_handler.hpp"
-#include "values_metric_id_fmt.hpp"
-#include "values_metric_labels.hpp"
 
 namespace yafiyogi::mendel {
 
@@ -109,7 +109,7 @@ ActionsHandler::ActionsHandler(actions::StorePtr p_actions_store,
 
 void ActionsHandler::Run(std::stop_token p_stop_token)
 {
-  values::MetricDataVector l_data_in;
+  yy_values::MetricDataVector l_data_in;
 
   actions::Store & l_actions_store = *m_actions_store;
   values::Store & l_values_store = *m_values_store;
@@ -145,7 +145,7 @@ void ActionsHandler::Run(std::stop_token p_stop_token)
             if(auto [param_iter, param_found] = yy_data::find_iter(params, data.Id(), actions::actions_detail::compare_param);
                !param_found)
             {
-              values::MetricDataObsPtr param{&data};
+              yy_values::MetricDataObsPtr param{&data};
 
               params.emplace(param_iter, param);
             }

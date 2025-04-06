@@ -28,11 +28,11 @@
 
 #include "yy_cpp/yy_ring_buffer.h"
 
-#include "values_metric_data.h"
+#include "yy_values/yy_values_metric_data.hpp"
 
 namespace yafiyogi::values {
 
-using MetricDataQueue = yy_data::ring_buffer<values::MetricDataVector, 32>;
+using MetricDataQueue = yy_data::ring_buffer<yy_values::MetricDataVector, 32>;
 using MetricDataQueueReader = yy_data::ring_buffer_reader<MetricDataQueue>;
 using MetricDataQueueWriter = yy_data::ring_buffer_writer<MetricDataQueue>;
 

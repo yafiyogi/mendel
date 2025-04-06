@@ -32,8 +32,9 @@
 #include "yy_cpp/yy_observer_ptr.hpp"
 #include "yy_cpp/yy_vector.h"
 
+#include "yy_values/yy_values_metric_data.hpp"
+
 #include "action_result.hpp"
-#include "values_metric_data.h"
 
 namespace yafiyogi::values {
 
@@ -44,7 +45,8 @@ class Store;
 namespace yafiyogi::actions {
 namespace actions_detail {
 
-inline int compare_param(const values::MetricDataObsPtr param, const values::MetricId & target)
+inline int compare_param(const yy_values::MetricDataObsPtr param,
+                         const yy_values::MetricId & target)
 {
   return param->Id().compare(target);
 }
@@ -53,7 +55,7 @@ inline int compare_param(const values::MetricDataObsPtr param, const values::Met
 
 class Store;
 
-using ParamVector = yy_quad::simple_vector<values::MetricDataObsPtr>;
+using ParamVector = yy_quad::simple_vector<yy_values::MetricDataObsPtr>;
 
 class Action
 {

@@ -28,10 +28,11 @@
 
 #include <string_view>
 
+#include "yy_values/yy_value_type.hpp"
+#include "yy_values/yy_values_metric.hpp"
+#include "yy_values/yy_values_metric_data.hpp"
+
 #include "mqtt_handler.h"
-#include "value_type.h"
-#include "values_metric.h"
-#include "values_metric_data.h"
 
 namespace yafiyogi::mendel {
 
@@ -39,10 +40,10 @@ class MqttValueHandler:
       public MqttHandler
 {
   public:
-    using MetricDataVector = values::MetricDataVector;
+    using MetricDataVector = yy_values::MetricDataVector;
 
     explicit MqttValueHandler(std::string_view p_handler_id,
-                              values::Metrics && p_metrics) noexcept;
+                              yy_values::Metrics && p_metrics) noexcept;
     constexpr MqttValueHandler() noexcept = default;
     MqttValueHandler(const MqttValueHandler &) = delete;
     constexpr MqttValueHandler(MqttValueHandler &&) noexcept = default;
@@ -54,9 +55,9 @@ class MqttValueHandler:
                const std::string_view p_topic,
                const yy_mqtt::TopicLevelsView & p_levels,
                const timestamp_type p_timestamp,
-               values::MetricDataVectorPtr p_metric_data) noexcept override;
+               yy_values::MetricDataVectorPtr p_metric_data) noexcept override;
   private:
-    values::Metrics m_metrics{};
+    yy_values::Metrics m_metrics{};
     MetricDataVector m_metric_data{};
 };
 

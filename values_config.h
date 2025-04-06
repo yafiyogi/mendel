@@ -28,17 +28,14 @@
 
 #include <string>
 
-#include "yy_web/yy_web_server.h"
-
-#include "values_metric.h"
+#include "yy_values/yy_values_metric.hpp"
 
 namespace yafiyogi::values {
 
 struct config final
 {
     std::string uri{};
-    yy_web::WebServer::Options options{};
-    MetricsMap metrics{};
+    yy_values::MetricsMap metrics{};
 };
 
 } // namespace yafiyogi::values

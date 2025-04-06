@@ -26,7 +26,6 @@
 
 #include "spdlog/spdlog.h"
 
-
 #include "yy_cpp/yy_string_case.h"
 #include "yy_cpp/yy_string_util.h"
 #include "yy_cpp/yy_make_lookup.h"

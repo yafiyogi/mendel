@@ -28,10 +28,10 @@
 
 #include "spdlog/spdlog.h"
 
-#include "values_metric_id_fmt.hpp"
+#include "yy_values/yy_values_metric_id_fmt.hpp"
+#include "yy_values/yy_values_metric_labels.hpp"
 
 #include "actions_handler.hpp"
-#include "values_metric_labels.hpp"
 
 #include "cache_handler.hpp"
 
@@ -55,8 +55,8 @@ void CacheHandler::Run(std::stop_token p_stop_token)
 {
   values::Store & l_values_store = *m_values_store;
 
-  values::MetricDataVector l_data_in;
-  values::MetricDataVector l_data_out;
+  yy_values::MetricDataVector l_data_in;
+  yy_values::MetricDataVector l_data_out;
 
   size_type spin = 1; // Set to 1 to prevent spinning at startup.
   while(!p_stop_token.stop_requested())

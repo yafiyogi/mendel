@@ -35,7 +35,8 @@
 
 #include "mosquittopp.h"
 
-#include "values_labels.h"
+#include "yy_values/yy_values_labels.hpp"
+
 #include "values_metric_data_queue.hpp"
 #include "mqtt_topics.h"
 
@@ -82,7 +83,7 @@ class mqtt_client final:
     std::string m_host{};
     int m_port = yy_mqtt::mqtt_default_port;
     yy_mqtt::TopicLevelsView m_path{};
-    values::MetricDataVector m_metric_data{};
+    yy_values::MetricDataVector m_metric_data{};
     values::MetricDataQueueWriter m_cache_queue{};
     std::atomic<bool> m_is_connected = false;
     std::atomic<bool> m_stop = false;

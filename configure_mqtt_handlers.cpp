@@ -69,7 +69,7 @@ MqttHandler::type decode_type(const YAML::Node & yaml_type)
 
 MqttHandlerPtr configure_json_handler(std::string_view p_id,
                                       const YAML::Node & yaml_json_handler,
-                                      values::MetricsMap & values_metrics)
+                                      yy_values::MetricsMap & values_metrics)
 {
   MqttHandlerPtr mqtt_json_handler{};
   auto yaml_properties = yaml_json_handler["properties"sv];
@@ -85,7 +85,7 @@ MqttHandlerPtr configure_json_handler(std::string_view p_id,
       if(nullptr != visitor_values_metrics)
       {
         auto [builder_metrics, added] = json_pointer_builder.add_pointer(json_pointer,
-                                                                         values::Metrics{});
+                                                                         yy_values::Metrics{});
         if(nullptr != builder_metrics)
         {
           for(auto & metric : *visitor_values_metrics)
@@ -94,7 +94,7 @@ MqttHandlerPtr configure_json_handler(std::string_view p_id,
             {
               ++metrics_count;
               spdlog::info("       metric [{}] added."sv,
-                           metric->Id().Id());
+                           metric->Id().Name());
               builder_metrics->emplace_back(std::move(metric));
             }
           }
@@ -162,16 +162,16 @@ MqttHandlerPtr configure_json_handler(std::string_view p_id,
 
 MqttHandlerPtr configure_text_handler(std::string_view /* p_id */,
                                       const YAML::Node & /* yaml_text_handler */,
-                                      values::MetricsMap & /* values_metrics */)
+                                      yy_values::MetricsMap & /* values_metrics */)
 {
   return MqttHandlerPtr{};
 }
 
 MqttHandlerPtr configure_value_handler(std::string_view p_id,
                                        const YAML::Node & /* yaml_value_handler */,
-                                       values::MetricsMap & values_metrics)
+                                       yy_values::MetricsMap & values_metrics)
 {
-  values::Metrics handler_metrics{} ;
+  yy_values::Metrics handler_metrics{} ;
   auto do_add_property = [&handler_metrics]
                          (auto visitor_values_metrics, auto /* pos */) {
     if(nullptr != visitor_values_metrics)
@@ -183,7 +183,7 @@ MqttHandlerPtr configure_value_handler(std::string_view p_id,
         if(metric)
         {
           spdlog::info("       metric [{}] added."sv,
-                       metric->Id().Id());
+                       metric->Id().Name());
           handler_metrics.emplace_back(std::move(metric));
         }
       }
@@ -207,7 +207,7 @@ MqttHandlerPtr configure_value_handler(std::string_view p_id,
 } // anonymous namespace
 
 MqttHandlerStore configure_mqtt_handlers(const YAML::Node & yaml_handlers,
-                                         values::MetricsMap & values_config)
+                                         yy_values::MetricsMap & values_config)
 {
   MqttHandlerStore handler_store{};
 

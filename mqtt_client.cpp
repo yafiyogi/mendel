@@ -33,12 +33,13 @@
 
 #include "yy_mqtt/yy_mqtt_util.h"
 
+#include "yy_values/yy_values_labels.hpp"
+#include "yy_values/yy_values_metric_labels.hpp"
+
 #include "action.hpp"
 #include "configure_mqtt.h"
 #include "configure_mqtt_client.h"
 #include "mqtt_handler.h"
-#include "values_labels.h"
-#include "values_metric_labels.hpp"
 
 #include "mqtt_client.h"
 
@@ -140,7 +141,7 @@ struct ActionData final
     }
 
     actions::ActionPtr action;
-    values::MetricDataVector data;
+    yy_values::MetricDataVector data;
 };
 
 void mqtt_client::on_message(const struct mosquitto_message * message)
@@ -159,7 +160,7 @@ void mqtt_client::on_message(const struct mosquitto_message * message)
 
     m_metric_data.clear(yy_data::ClearAction::Keep);
 
-    values::MetricDataVectorPtr metric_data{&m_metric_data};
+    yy_values::MetricDataVectorPtr metric_data{&m_metric_data};
     for(auto & handlers : payloads)
     {
       for(auto & handler : *handlers)

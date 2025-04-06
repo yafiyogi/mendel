@@ -32,9 +32,9 @@
 #include "yy_cpp/yy_flat_map.h"
 #include "yy_cpp/yy_vector.h"
 #include "yy_maths/yy_ekf.hpp"
+#include "yy_values/yy_values_metric_id.hpp"
 
 #include "action.hpp"
-#include "values_metric_id.h"
 
 namespace yafiyogi::actions {
 namespace kalman_action_detail {
@@ -52,29 +52,29 @@ struct OutputMapping
     }
 
     std::string property{};
-    values::MetricId value_id{};
+    yy_values::MetricId value_id{};
     size_type output_idx = 0;
 };
 
 struct InputMapping
 {
-    constexpr bool operator<(const values::MetricId & value) const noexcept
+    constexpr bool operator<(const yy_values::MetricId & value) const noexcept
     {
       return value_id < value;
     }
 
-    constexpr bool operator==(const values::MetricId & value) const noexcept
+    constexpr bool operator==(const yy_values::MetricId & value) const noexcept
     {
       return value_id == value;
     }
 
-    values::MetricId value_id{};
+    yy_values::MetricId value_id{};
     size_type input_idx = 0;
     size_type output_idx = 0;
     bool initialized = false;
 
     static int compare(const InputMapping & mapping,
-                       const values::MetricId & id)
+                       const yy_values::MetricId & id)
     {
       return mapping.value_id.compare(id);
     }
@@ -84,12 +84,12 @@ struct InputMapping
 
 struct KalmanOption
 {
-    values::MetricId input{};
+    yy_values::MetricId input{};
     std::string output{};
     yy_maths::ekf::value_type accuracy{yy_maths::ekf::EPS};
 
     static int compare(const KalmanOption & option,
-                       const values::MetricId & id)
+                       const yy_values::MetricId & id)
     {
       return option.input.compare(id);
     }

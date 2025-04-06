@@ -28,9 +28,10 @@
 
 #include "yy_tp_util/yaml_fwd.h"
 
+#include "yy_values/yy_values_metric.hpp"
+
 #include "mqtt_handler_fwd.h"
 #include "mqtt_topics.h"
-#include "values_metric.h"
 
 namespace yafiyogi::mendel {
 
@@ -42,6 +43,6 @@ struct mqtt_client_config final
 };
 
 mqtt_client_config configure_mqtt_client(const YAML::Node & yaml_mqtt,
-                                         values::MetricsMap & p_values_config);
+                                         yy_values::MetricsMap & p_values_config);
 
 } // namespace yafiyogi::mendel

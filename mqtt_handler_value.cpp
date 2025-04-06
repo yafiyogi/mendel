@@ -28,8 +28,8 @@
 
 #include "spdlog/spdlog.h"
 
-#include "values_metric.h"
-#include "values_metric_data.h"
+#include "yy_values/yy_values_metric.hpp"
+#include "yy_values/yy_values_metric_data.hpp"
 
 #include "mqtt_handler_value.h"
 
@@ -38,7 +38,7 @@ namespace yafiyogi::mendel {
 using namespace std::string_view_literals;
 
 MqttValueHandler::MqttValueHandler(std::string_view p_handler_id,
-                                   values::Metrics && p_metrics) noexcept:
+                                   yy_values::Metrics && p_metrics) noexcept:
   MqttHandler(p_handler_id, type::Value),
   m_metrics(std::move(p_metrics))
 {
@@ -49,7 +49,7 @@ void MqttValueHandler::Event(std::string_view p_mqtt_data,
                              const std::string_view p_topic,
                              const yy_mqtt::TopicLevelsView & p_levels,
                              const timestamp_type p_timestamp,
-                             values::MetricDataVectorPtr p_metric_data) noexcept
+                             yy_values::MetricDataVectorPtr p_metric_data) noexcept
 {
   spdlog::debug("  handler [{}]"sv, Id());
 
@@ -59,7 +59,7 @@ void MqttValueHandler::Event(std::string_view p_mqtt_data,
                   p_topic,
                   p_levels,
                   p_timestamp,
-                  values::ValueType::Unknown,
+                  yy_values::ValueType::Unknown,
                   p_metric_data);
   }
 }

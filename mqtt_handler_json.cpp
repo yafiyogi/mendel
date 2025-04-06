@@ -33,8 +33,8 @@
 
 #include "yy_cpp/yy_assert.h"
 
-#include "values_labels.h"
-#include "values_metric_data.h"
+#include "yy_values/yy_values_labels.hpp"
+#include "yy_values/yy_values_metric_data.hpp"
 
 #include "mqtt_handler_json.h"
 
@@ -65,14 +65,14 @@ void JsonVisitor::timestamp(const timestamp_type p_timestamp) noexcept
   m_timestamp = p_timestamp;
 }
 
-void JsonVisitor::metric_data(values::MetricDataVectorPtr p_metric_data) noexcept
+void JsonVisitor::metric_data(yy_values::MetricDataVectorPtr p_metric_data) noexcept
 {
   m_metric_data = p_metric_data;
 }
 
 void JsonVisitor::apply(Metrics & p_metrics,
                         std::string_view p_value,
-                        values::ValueType p_value_type)
+                        yy_values::ValueType p_value_type)
 {
   for(auto & metric : p_metrics)
   {
@@ -101,7 +101,7 @@ void MqttJsonHandler::Event(std::string_view p_mqtt_data,
                             const std::string_view p_topic,
                             const yy_mqtt::TopicLevelsView & p_levels,
                             const timestamp_type p_timestamp,
-                            values::MetricDataVectorPtr p_metric_data) noexcept
+                            yy_values::MetricDataVectorPtr p_metric_data) noexcept
 {
   spdlog::debug("  handler [{}]"sv, Id());
 

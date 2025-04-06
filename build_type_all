@@ -68,6 +68,15 @@ rm -rf ./*
 cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} ..
 ${YY_MAKE} all test && make install || exit 1
 
+echo "\nyy_values"
+cd ../../yy_values/build
+if [ -f Makefile ]; then
+    ${YY_MAKE} clean
+fi
+rm -rf ./*
+cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} ..
+${YY_MAKE} all test && make install || exit 1
+
 echo "\nmendel"
 cd ../../mendel/build-dir
 if [ -f Makefile ]; then

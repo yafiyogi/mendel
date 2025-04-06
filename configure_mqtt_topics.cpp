@@ -30,12 +30,10 @@
 #include "yy_cpp/yy_flat_set.h"
 #include "yy_cpp/yy_string_util.h"
 #include "yy_cpp/yy_yaml_util.h"
-
 #include "yy_mqtt/yy_mqtt_util.h"
-
+#include "yy_values/yy_values_labels.hpp"
 
 #include "mqtt_handler.h"
-#include "values_labels.h"
 
 #include "configure_mqtt_topics.h"
 

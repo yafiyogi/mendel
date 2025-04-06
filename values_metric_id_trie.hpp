@@ -34,7 +34,7 @@
 #include "yy_cpp/yy_span.h"
 #include "yy_cpp/yy_tokenizer.h"
 
-#include "values_metric_id.h"
+#include "yy_values/yy_values_metric_id.hpp"
 
 namespace yafiyogi::values {
 namespace metric_id_trie_detail {
@@ -80,10 +80,10 @@ class Query final
     template<typename Visitor>
     [[nodiscard]]
     constexpr bool find(Visitor && p_visitor,
-                        const MetricId & p_metric_id) noexcept
+                        const yy_values::MetricId & p_metric_id) noexcept
     {
       node_ptr node{find_string(node_ptr{m_nodes.data()},
-                                yy_quad::make_const_span(p_metric_id.Id()))};
+                                yy_quad::make_const_span(p_metric_id.Name()))};
 
       if(node)
       {

@@ -41,6 +41,7 @@
 #include "yy_cpp/yy_lockable_value.h"
 #include "yy_cpp/yy_locale.h"
 #include "yy_cpp/yy_yaml_util.h"
+#include "yy_values/yy_configure_values.hpp"
 
 #include "actions_result_queue.hpp"
 #include "actions_handler.hpp"
@@ -49,7 +50,6 @@
 #include "configure_logging.h"
 #include "configure_mqtt.h"
 #include "configure_mqtt_client.h"
-#include "configure_values.h"
 #include "logger.h"
 #include "mqtt_client.h"
 #include "mqtt_handler.h"
@@ -156,7 +156,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  auto values_config{values::configure_values(yaml_values)};
+  auto values_config{yy_values::configure_values(yaml_values)};
 
   const auto & yaml_mqtt = yaml_config["mqtt"sv];
   if(!yaml_mqtt)

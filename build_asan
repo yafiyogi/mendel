@@ -22,10 +22,14 @@ ${YY_MAKE} all asan install || exit 1
 
 echo "\nyy_maths"
 cd ../../yy_maths/build
-${YY_MAKE} all test install || exit 1
+${YY_MAKE} all asan install || exit 1
 
 echo "\nyy_mqtt"
 cd ../../yy_mqtt/build
+${YY_MAKE} all asan install || exit 1
+
+echo "\nyy_values"
+cd ../../yy_values/build
 ${YY_MAKE} all asan install || exit 1
 
 echo "\nmendel"

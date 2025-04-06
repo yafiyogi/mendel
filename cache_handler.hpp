@@ -33,7 +33,7 @@
 #include "actions_store.hpp"
 #include "values_store.hpp"
 
-#include "values_metric_data.h"
+#include "yy_values/yy_values_metric_data.hpp"
 #include "values_metric_data_queue.hpp"
 
 namespace yafiyogi::mendel {

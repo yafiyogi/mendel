@@ -28,6 +28,10 @@ echo "yy_mqtt: cleaning"
 cd ../../yy_mqtt/build
 ${YY_MAKE} clean || exit 1
 
+echo "yy_values: cleaning"
+cd ../../yy_values/build
+${YY_MAKE} clean || exit 1
+
 echo "mendel: cleaning"
 cd ../../mendel/build-dir
 ${YY_MAKE} clean || exit 1

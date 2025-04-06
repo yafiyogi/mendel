@@ -51,6 +51,7 @@ find_package(yy_cpp REQUIRED)
 find_package(yy_json REQUIRED)
 find_package(yy_maths REQUIRED)
 find_package(yy_mqtt REQUIRED)
+find_package(yy_values REQUIRED)
 
 pkg_check_modules(Mosquitto_c IMPORTED_TARGET libmosquitto_static REQUIRED)
 pkg_check_modules(Mosquitto_cpp IMPORTED_TARGET libmosquittopp_static REQUIRED)
@@ -62,31 +63,18 @@ add_executable(mendel
   actions_store.cpp
   cache_handler.cpp
   configure_actions.cpp
-  configure_label_actions.cpp
   configure_logging.cpp
   configure_mqtt.cpp
   configure_mqtt_client.cpp
   configure_mqtt_handlers.cpp
   configure_mqtt_topics.cpp
-  configure_values.cpp
-  label_action_copy.cpp
-  label_action_drop.cpp
-  label_action_keep.cpp
-  label_action_replace_path.cpp
   logger.cpp
   mqtt_client.cpp
   mqtt_handler.cpp
   mqtt_handler_json.cpp
   mqtt_handler_value.cpp
   mqtt_publisher.cpp
-  replacement_format.cpp
-  value_action_keep.cpp
-  value_action_switch.cpp
-  values_labels.cpp
-  values_metric.cpp
-  values_metric_id.cpp
   values_store.cpp
-  values_metric_data.cpp
   mendel.cpp )
 
 target_compile_options(mendel
@@ -115,6 +103,7 @@ if("${yy_system_name}" STREQUAL "darwin")
 endif()
 
 target_link_libraries(mendel
+    yy_values::yy_values
     yy_mqtt::yy_mqtt
     yy_maths::yy_maths
     yy_json::yy_json

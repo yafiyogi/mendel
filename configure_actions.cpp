@@ -98,7 +98,7 @@ void configure_kalman(const YAML::Node & yaml_kalman,
 
         if(!input.empty() && !output.empty())
         {
-          options.emplace_back(values::MetricId{input}, std::string{output});
+          options.emplace_back(yy_values::MetricId{input}, std::string{output});
 
           inputs.emplace_back(std::string{input});
           outputs.emplace_back(std::string{output});
@@ -123,7 +123,7 @@ void configure_kalman(const YAML::Node & yaml_kalman,
             accuracy *= accuracy;
           }
 
-          options.emplace_back(values::MetricId{input}, std::string{output}, accuracy);
+          options.emplace_back(yy_values::MetricId{input}, std::string{output}, accuracy);
 
           inputs.emplace_back(std::string{input});
           outputs.emplace_back(std::string{output});

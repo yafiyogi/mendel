@@ -38,6 +38,10 @@ echo "\nyy_mqtt"
 cd ../../yy_mqtt/build
 ${YY_MAKE} tidy-all
 
+echo "\nyy_values"
+cd ../../yy_values/build
+${YY_MAKE} tidy-all
+
 echo "\nmendel"
 cd ../../mendel/build-dir
 ${YY_MAKE} tidy-all
