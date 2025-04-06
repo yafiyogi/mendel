@@ -31,7 +31,7 @@ cd ../yy_mqtt
 git pull origin
 
 echo "\nyy_values"
-cd ../../yy_values
+cd ../yy_values
 git pull origin
 
 echo "\nmendel"
