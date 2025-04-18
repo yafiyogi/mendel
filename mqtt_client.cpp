@@ -158,6 +158,7 @@ void mqtt_client::on_message(const struct mosquitto_message * message)
 
     timestamp_type ts{std::chrono::time_point_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now()).time_since_epoch()};
 
+    size_type metric_count = 0;
     m_metric_data.clear(yy_data::ClearAction::Keep);
 
     yy_values::MetricDataVectorPtr metric_data{&m_metric_data};
@@ -165,6 +166,9 @@ void mqtt_client::on_message(const struct mosquitto_message * message)
     {
       for(auto & handler : *handlers)
       {
+        metric_count += handler->MetricCount();
+        m_metric_data.reserve(metric_count);
+
         handler->Event(data, topic, m_path, ts, metric_data);
       }
     }

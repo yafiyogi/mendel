@@ -38,11 +38,11 @@ namespace yafiyogi::mendel {
 using namespace std::string_view_literals;
 
 MqttValueHandler::MqttValueHandler(std::string_view p_handler_id,
-                                   yy_values::Metrics && p_metrics) noexcept:
-  MqttHandler(p_handler_id, type::Value),
+                                   yy_values::Metrics && p_metrics,
+                                   size_type p_metrics_count) noexcept:
+  MqttHandler(p_handler_id, type::Value, p_metrics_count),
   m_metrics(std::move(p_metrics))
 {
-  m_metric_data.reserve(m_metrics.size());
 }
 
 void MqttValueHandler::Event(std::string_view p_mqtt_data,

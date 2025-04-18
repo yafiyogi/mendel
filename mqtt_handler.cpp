@@ -31,10 +31,35 @@
 namespace yafiyogi::mendel {
 
 MqttHandler::MqttHandler(std::string_view p_handler_id,
-                         const type p_type) noexcept:
+                         const type p_type,
+                         size_type p_metric_count) noexcept:
+  m_metric_count(p_metric_count),
   m_handler_id(p_handler_id),
   m_type(p_type)
 {
 }
+
+MqttHandler::MqttHandler(MqttHandler && p_other) noexcept:
+  m_metric_count(p_other.m_metric_count),
+  m_handler_id(std::move(p_other.m_handler_id)),
+  m_type(p_other.m_type)
+{
+  p_other.m_metric_count = 0;
+  p_other.m_type = type::Text;
+}
+
+MqttHandler & MqttHandler::operator=(MqttHandler && p_other) noexcept
+{
+  if(this != &p_other)
+  {
+    m_metric_count = p_other.m_metric_count;
+    p_other.m_metric_count = 0;
+    m_handler_id = std::move(p_other.m_handler_id);
+    m_type = p_other.m_type;
+    p_other.m_type = type::Text;
+  }
+  return *this;
+}
+
 
 } // namespace yafiyogi::mendel

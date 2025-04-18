@@ -24,8 +24,6 @@
 
 */
 
-#include <cstdint>
-
 #include <memory>
 #include <string_view>
 
@@ -46,6 +44,30 @@ namespace json_handler_detail {
 
 const yy_mqtt::TopicLevelsView JsonVisitor::g_empty_levels{};
 
+JsonVisitor::JsonVisitor(JsonVisitor && p_other) noexcept:
+  m_levels(std::move(p_other.m_levels)),
+  m_metric_data(std::move(p_other.m_metric_data)),
+  m_timestamp(p_other.m_timestamp),
+  m_topic(p_other.m_topic)
+{
+  p_other.reset();
+}
+
+JsonVisitor & JsonVisitor::operator=(JsonVisitor && p_other) noexcept
+{
+  if(this != &p_other)
+  {
+    m_levels = p_other.m_levels;
+    m_metric_data = std::move(p_other.m_metric_data);
+    m_timestamp = p_other.m_timestamp;
+    m_topic = p_other.m_topic;
+
+    p_other.reset();
+  }
+
+  return *this;
+}
+
 void JsonVisitor::levels(const yy_mqtt::TopicLevelsView * p_levels) noexcept
 {
   if(nullptr == p_levels)
@@ -53,6 +75,11 @@ void JsonVisitor::levels(const yy_mqtt::TopicLevelsView * p_levels) noexcept
     p_levels = &g_empty_levels;
   }
   m_levels = p_levels;
+}
+
+void JsonVisitor::metric_data(yy_values::MetricDataVectorPtr p_metric_data) noexcept
+{
+  m_metric_data = p_metric_data;
 }
 
 void JsonVisitor::topic(const std::string_view p_topic) noexcept
@@ -65,9 +92,12 @@ void JsonVisitor::timestamp(const timestamp_type p_timestamp) noexcept
   m_timestamp = p_timestamp;
 }
 
-void JsonVisitor::metric_data(yy_values::MetricDataVectorPtr p_metric_data) noexcept
+void JsonVisitor::reset() noexcept
 {
-  m_metric_data = p_metric_data;
+  m_levels = &g_empty_levels;
+  m_metric_data.release();
+  m_timestamp = timestamp_type{};
+  m_topic = std::string_view{};
 }
 
 void JsonVisitor::apply(Metrics & p_metrics,
@@ -90,10 +120,9 @@ void JsonVisitor::apply(Metrics & p_metrics,
 MqttJsonHandler::MqttJsonHandler(std::string_view p_handler_id,
                                  const parser_options_type & p_json_options,
                                  handler_config_type && p_json_handler_config,
-                                 size_type p_metrics_count) noexcept:
-  MqttHandler(p_handler_id, type::Json),
-  m_parser(p_json_options, std::move(p_json_handler_config)),
-  m_metrics_count(p_metrics_count)
+                                 size_type p_metric_count) noexcept:
+  MqttHandler(p_handler_id, type::Json, p_metric_count),
+  m_parser(p_json_options, std::move(p_json_handler_config))
 {
 }
 
@@ -104,8 +133,6 @@ void MqttJsonHandler::Event(std::string_view p_mqtt_data,
                             yy_values::MetricDataVectorPtr p_metric_data) noexcept
 {
   spdlog::debug("  handler [{}]"sv, Id());
-
-  p_metric_data->reserve(p_metric_data->size() + m_metrics_count);
 
   m_parser.reset();
   auto & handler = m_parser.handler();

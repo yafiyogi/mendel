@@ -199,7 +199,8 @@ MqttHandlerPtr configure_value_handler(std::string_view p_id,
   }
   else
   {
-    handler = std::make_unique<MqttValueHandler>(p_id, std::move(handler_metrics));
+    auto metrics_count = handler_metrics.size();
+    handler = std::make_unique<MqttValueHandler>(p_id, std::move(handler_metrics), metrics_count);
   }
   return handler;
 }

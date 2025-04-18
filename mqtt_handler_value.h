@@ -43,13 +43,14 @@ class MqttValueHandler:
     using MetricDataVector = yy_values::MetricDataVector;
 
     explicit MqttValueHandler(std::string_view p_handler_id,
-                              yy_values::Metrics && p_metrics) noexcept;
+                              yy_values::Metrics && p_metrics,
+                              size_type p_metrics_count) noexcept;
     constexpr MqttValueHandler() noexcept = default;
     MqttValueHandler(const MqttValueHandler &) = delete;
-    constexpr MqttValueHandler(MqttValueHandler &&) noexcept = default;
+    MqttValueHandler(MqttValueHandler &&) noexcept = default;
 
     MqttValueHandler & operator=(const MqttValueHandler &) = delete;
-    constexpr MqttValueHandler & operator=(MqttValueHandler &&) noexcept = default;
+    MqttValueHandler & operator=(MqttValueHandler &&) noexcept = default;
 
     void Event(std::string_view p_mqtt_data,
                const std::string_view p_topic,
@@ -58,7 +59,6 @@ class MqttValueHandler:
                yy_values::MetricDataVectorPtr p_metric_data) noexcept override;
   private:
     yy_values::Metrics m_metrics{};
-    MetricDataVector m_metric_data{};
 };
 
 } // namespace yafiyogi::mendel

@@ -26,7 +26,6 @@
 
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
 
 #include "boost/json/basic_parser_impl.hpp"
@@ -43,7 +42,7 @@
 namespace yafiyogi::mendel {
 namespace json_handler_detail {
 
-class JsonVisitor
+class JsonVisitor final
 {
   public:
     using MetricDataVector = yy_values::MetricDataVector;
@@ -51,35 +50,16 @@ class JsonVisitor
 
     constexpr JsonVisitor() noexcept = default;
     constexpr JsonVisitor(const JsonVisitor &) noexcept = default;
-    constexpr JsonVisitor(JsonVisitor && p_other) noexcept:
-      m_levels(p_other.m_levels),
-      m_metric_data(p_other.m_metric_data),
-      m_timestamp(p_other.m_timestamp),
-      m_topic(p_other.m_topic)
-    {
-      p_other.reset();
-    }
+    JsonVisitor(JsonVisitor && p_other) noexcept;
 
     constexpr JsonVisitor & operator=(const JsonVisitor &) noexcept = default;
-    constexpr JsonVisitor & operator=(JsonVisitor && p_other) noexcept
-    {
-      if(this != &p_other)
-      {
-        m_levels = p_other.m_levels;
-        m_metric_data = std::move(p_other.m_metric_data);
-        m_timestamp = p_other.m_timestamp;
-        m_topic = p_other.m_topic;
-
-        p_other.reset();
-      }
-
-      return *this;
-    }
+    JsonVisitor & operator=(JsonVisitor && p_other) noexcept;
 
     void levels(const yy_mqtt::TopicLevelsView * p_levels) noexcept;
     void metric_data(yy_values::MetricDataVectorPtr p_metric_data) noexcept;
     void topic(const std::string_view p_topic) noexcept;
     void timestamp(const timestamp_type p_timestamp) noexcept;
+    void reset() noexcept;
 
     void apply_str(Metrics & metrics,
                    std::string_view str)
@@ -114,14 +94,6 @@ class JsonVisitor
       apply(metrics, flag ? g_true_str : g_false_str, yy_values::ValueType::Bool);
     }
 
-    constexpr void reset() noexcept
-    {
-      m_levels = &g_empty_levels;
-      m_metric_data.release();
-      m_timestamp = timestamp_type{};
-      m_topic = std::string_view{};
-    }
-
   private:
     void apply(Metrics & p_metrics,
                std::string_view p_data,
@@ -153,7 +125,7 @@ class MqttJsonHandler final:
     explicit MqttJsonHandler(std::string_view p_handler_id,
                              const parser_options_type & p_json_options,
                              handler_config_type && p_json_handler_config,
-                             size_type metric_count) noexcept;
+                             size_type p_metric_count) noexcept;
 
     MqttJsonHandler() = delete;
     MqttJsonHandler(const MqttJsonHandler &) = delete;
@@ -170,7 +142,6 @@ class MqttJsonHandler final:
 
   private:
     parser_type m_parser;
-    size_type m_metrics_count = 0;
 };
 
 } // namespace yafiyogi::mendel

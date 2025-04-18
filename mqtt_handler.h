@@ -43,33 +43,19 @@ namespace yafiyogi::mendel {
 class MqttHandler
 {
   public:
-
-    enum class type {Json, Text, Value};
+    enum class type:uint8_t {Json, Text, Value};
 
     explicit MqttHandler(std::string_view p_handler_id,
-                         const type p_type) noexcept;
+                         const type p_type,
+                         size_type p_metric_count) noexcept;
     constexpr MqttHandler() noexcept = default;
     MqttHandler(const MqttHandler &) = delete;
-    constexpr MqttHandler(MqttHandler && p_other) noexcept:
-      m_handler_id(std::move(p_other.m_handler_id)),
-      m_type(p_other.m_type)
-    {
-      p_other.m_type = type::Text;
-    }
+    MqttHandler(MqttHandler && p_other) noexcept;
 
     constexpr virtual ~MqttHandler() noexcept = default;
 
     MqttHandler & operator=(const MqttHandler &) = delete;
-    constexpr MqttHandler & operator=(MqttHandler && p_other) noexcept
-    {
-      if(this != &p_other)
-      {
-        m_handler_id = std::move(p_other.m_handler_id);
-        m_type = p_other.m_type;
-        p_other.m_type = type::Text;
-      }
-      return *this;
-    }
+    MqttHandler & operator=(MqttHandler && p_other) noexcept;
 
     [[nodiscard]]
     constexpr const std::string & Id() const noexcept
@@ -83,12 +69,20 @@ class MqttHandler
       return m_type;
     }
 
+    [[nodiscard]]
+    constexpr size_type MetricCount() const noexcept
+    {
+      return m_metric_count;
+    }
+
     virtual void Event(std::string_view p_mqtt_data,
                        const std::string_view p_topic,
                        const yy_mqtt::TopicLevelsView & p_levels ,
                        const timestamp_type p_timestamp,
                        yy_values::MetricDataVectorPtr p_metric_data) noexcept = 0;
+
   private:
+    size_type m_metric_count = 0;
     std::string m_handler_id{};
     type m_type = type::Text;
 };
