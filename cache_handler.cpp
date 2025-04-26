@@ -28,6 +28,7 @@
 
 #include "spdlog/spdlog.h"
 
+#include "yy_cpp/yy_find_raw_util.hpp"
 #include "yy_values/yy_values_metric_id_fmt.hpp"
 #include "yy_values/yy_values_metric_labels.hpp"
 
