@@ -28,6 +28,7 @@
 
 #include "spdlog/spdlog.h"
 
+#include "yy_cpp/yy_find_raw_util.hpp"
 #include "yy_values/yy_values_metric_id_fmt.hpp"
 #include "yy_values/yy_values_metric_labels.hpp"
 #include "action.hpp"
@@ -133,21 +134,23 @@ void ActionsHandler::Run(std::stop_token p_stop_token)
         auto add_actions_n_data = [&data, &l_actions](actions::Store::value_ptr actions) {
           for(auto action : *actions)
           {
-            auto [action_iter, action_found] = yy_data::find_iter(l_actions, action);
+            auto [action_pos, action_found] = yy_data::find_raw_pos(l_actions, action);
+            auto action_iter = l_actions.data() + action_pos;
+
             if(!action_found)
             {
-              auto [iter, _] = l_actions.emplace(action_iter, action, actions::ParamVector{});
-              action_iter = std::move(iter);
+              auto [iter, _] = l_actions.emplace(l_actions.begin() + action_pos, action, actions::ParamVector{});
+              action_iter = l_actions.data() + (iter - l_actions.begin());
             }
 
             auto & params = action_iter->params;
 
-            if(auto [param_iter, param_found] = yy_data::find_iter(params, data.Id(), actions::actions_detail::compare_param);
+            if(auto [param_iter, param_found] = yy_data::find_raw(params, data.Id(), actions::actions_detail::compare_param);
                !param_found)
             {
               yy_values::MetricDataObsPtr param{&data};
 
-              params.emplace(param_iter, param);
+              params.emplace(params.begin() + (param_iter - params.data()), param);
             }
           }
         };
