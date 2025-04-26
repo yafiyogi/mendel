@@ -78,7 +78,6 @@ class Store final
 };
 
 using StorePtr = std::shared_ptr<Store>;
-using StoreObsPtr = yy_data::observer_ptr<Store>;
 
 class StoreBuilder final
 {

@@ -26,8 +26,6 @@
 
 #pragma once
 
-#include "yy_cpp/yy_observer_ptr.hpp"
-
 #include "action.hpp"
 #include "values_metric_id_trie.hpp"
 
@@ -36,8 +34,8 @@ namespace yafiyogi::actions {
 class Store
 {
   public:
-    using value_type = yy_quad::simple_vector<actions::ActionObsPtr>;
-    using value_ptr = yy_data::observer_ptr<value_type>;
+    using value_type = yy_quad::simple_vector<ActionObsPtr>;
+    using value_ptr = std::add_pointer_t<value_type>;
     using store_builder_type = values::metric_id_trie<value_type>;
     using store_type = store_builder_type::automaton_type;
     using actions_type = yy_quad::simple_vector<actions::ActionPtr>;
@@ -73,7 +71,6 @@ class Store
 };
 
 using StorePtr = std::unique_ptr<Store>;
-using StoreObsPtr = yy_data::observer_ptr<Store>;
 
 class StoreBuilder
 {
