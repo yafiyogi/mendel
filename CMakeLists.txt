@@ -37,7 +37,6 @@ set(YY_CMAKE "${YY_ROOT}/yy_cmake")
 
 include(${YY_CMAKE}/cmake_common.txt)
 include(${YY_CMAKE}/cmake_clang_tidy.txt)
-
 include(${YY_CMAKE}/cmake_boost-1.84.0.txt)
 
 find_package(Boost 1.84.0 CONFIG REQUIRED COMPONENTS json locale program_options)
@@ -45,7 +44,7 @@ find_package(fmt REQUIRED)
 find_package(re2 REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(yaml-cpp REQUIRED)
-find_package(ICU REQUIRED)
+find_package(ICU 77.1 COMPONENTS data i18n io uc REQUIRED)
 find_package(LibreSSL REQUIRED)
 find_package(yy_cpp REQUIRED)
 find_package(yy_json REQUIRED)
@@ -102,23 +101,29 @@ if("${yy_system_name}" STREQUAL "darwin")
       "/opt/local/lib")
 endif()
 
+target_link_directories(mendel BEFORE PRIVATE ${YY_THIRD_PARTY_LIBRARY}/lib)
+
 target_link_libraries(mendel
-    yy_values::yy_values
-    yy_mqtt::yy_mqtt
-    yy_maths::yy_maths
-    yy_json::yy_json
-    yy_cpp::yy_cpp
-    Boost::json
-    Boost::locale
-    Boost::program_options
-    fmt::fmt
-    re2::re2
-    spdlog::spdlog
-    yaml-cpp::yaml-cpp
-    PkgConfig::Mosquitto_cpp
-    PkgConfig::Mosquitto_c
-    LibreSSL::Crypto
-    LibreSSL::SSL
-    PkgConfig::ZLib )
+  yy_values::yy_values
+  yy_mqtt::yy_mqtt
+  yy_maths::yy_maths
+  yy_json::yy_json
+  yy_cpp::yy_cpp
+  Boost::json
+  Boost::locale
+  Boost::program_options
+  fmt::fmt
+  re2::re2
+  spdlog::spdlog
+  yaml-cpp::yaml-cpp
+  PkgConfig::Mosquitto_cpp
+  PkgConfig::Mosquitto_c
+  LibreSSL::Crypto
+  LibreSSL::SSL
+  ICU::i18n
+  ICU::io
+  ICU::uc
+  ICU::data
+  PkgConfig::ZLib )
 
 add_yy_tidy_all(mendel)
