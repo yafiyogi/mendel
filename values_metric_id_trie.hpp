@@ -38,8 +38,8 @@
 namespace yafiyogi::values {
 namespace metric_id_trie_detail {
 
-static constexpr std::string_view MetricIdPathSeparator{":"};
-static constexpr char MetricIdPathSeparatorChar = MetricIdPathSeparator[0];
+inline constexpr std::string_view MetricIdPathSeparator{":"};
+inline constexpr char MetricIdPathSeparatorChar = MetricIdPathSeparator[0];
 
 template<typename TrieTraitsType>
 class Query final
