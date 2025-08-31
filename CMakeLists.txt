@@ -27,6 +27,7 @@
 # PKG_CONFIG_PATH=${HOME}/code/tp/lib/pkgconfig:${HOME}/code/tp/share/pkgconfig:${PKG_CONFIG_PATH} cmake --fresh -DCMAKE_INSTALL_PREFIX=${HOME}/code/cpp/build -DYY_THIRD_PARTY_LIBRARY=${HOME}/code/tp -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=Release .
 # cmake --fresh -DCMAKE_INSTALL_PREFIX=${HOME}/code/cpp/build -DYY_THIRD_PARTY_LIBRARY=${HOME}/code/tp -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=Release .
 # LSAN_OPTIONS="detect_leaks=1" ASAN_OPTIONS="detect_leaks=1" nohup ./yy_mendel -f ../mendel.yaml >> "mendel_$(date +'%Y-%m-%d').log" 2>&1 &
+# nohup build-dir/mendel -f ./mqtt_bridge.yaml >> "mendel_$(date +'%Y-%m-%d').log" 2>&1 &
 
 cmake_minimum_required(VERSION 3.24)
 
@@ -44,6 +45,7 @@ find_package(fmt REQUIRED)
 find_package(re2 REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(yaml-cpp REQUIRED)
+find_package(Iconv REQUIRED)
 find_package(ICU 77.1 COMPONENTS data i18n io uc REQUIRED)
 find_package(LibreSSL REQUIRED)
 find_package(yy_cpp REQUIRED)
@@ -124,6 +126,7 @@ target_link_libraries(mendel
   ICU::io
   ICU::uc
   ICU::data
+  Iconv::Iconv
   PkgConfig::ZLib )
 
 add_yy_tidy_all(mendel)
