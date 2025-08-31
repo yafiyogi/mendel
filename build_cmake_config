@@ -1,0 +1,9 @@
+build_type="$1"
+
+if [ -z "${build_type}" ]
+then
+    echo "No build type!"
+    exit 1
+fi
+
+YY_CMAKE_OPTIONS="--fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} .."

@@ -7,40 +7,44 @@ build_type="$1"
 if [ -z "${build_type}" ]
 then
     echo "No build type!"
+    exit 1
 fi
 
 YY_INSTALL_DIR="${HOME}/code/cpp/build"
 YY_TP_DIR="${HOME}/code/tp"
 
+. ./build_config ${build_type}
+. ./build_cmake_config ${build_type}
+
 echo "\nyy_test"
 cd ../yy_test/build
-cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} ..
+${YY_CMAKE} ${YY_CMAKE_OPTIONS}
 
 echo "\nyy_tp_util"
 cd ../../yy_tp_util/build
-cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} ..
+${YY_CMAKE} ${YY_CMAKE_OPTIONS}
 
 echo "\nyy_cpp"
 cd ../../yy_cpp/build
-cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} ..
+${YY_CMAKE} ${YY_CMAKE_OPTIONS}
 
 echo "\nyy_json"
 cd ../../yy_json/build
-cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} ..
+${YY_CMAKE} ${YY_CMAKE_OPTIONS}
 
 echo "\nyy_maths"
 cd ../../yy_maths/build
-cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} ..
+${YY_CMAKE} ${YY_CMAKE_OPTIONS}
 
 echo "\nyy_mqtt"
 cd ../../yy_mqtt/build
-cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} ..
+${YY_CMAKE} ${YY_CMAKE_OPTIONS}
 
 echo "\nyy_values"
 cd ../../yy_values/build
-cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} ..
+${YY_CMAKE} ${YY_CMAKE_OPTIONS}
 
 echo "\nmendel"
 cd ../../mendel/build-dir
-cmake --fresh -DCMAKE_INSTALL_PREFIX=${YY_INSTALL_DIR} -DYY_THIRD_PARTY_LIBRARY=${YY_TP_DIR} -DCMAKE_POSITION_INDEPENDENT_CODE=TRUE -DCMAKE_BUILD_TYPE=${build_type} ..
+${YY_CMAKE} ${YY_CMAKE_OPTIONS}
 cd ../
