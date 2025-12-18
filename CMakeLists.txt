@@ -53,10 +53,10 @@ find_package(yy_json REQUIRED)
 find_package(yy_maths REQUIRED)
 find_package(yy_mqtt REQUIRED)
 find_package(yy_values REQUIRED)
+find_package(ZLIB REQUIRED)
 
 pkg_check_modules(Mosquitto_c IMPORTED_TARGET libmosquitto_static REQUIRED)
 pkg_check_modules(Mosquitto_cpp IMPORTED_TARGET libmosquittopp_static REQUIRED)
-pkg_check_modules(ZLib IMPORTED_TARGET zlib REQUIRED)
 
 add_executable(mendel
   actions_handler.cpp
@@ -127,6 +127,6 @@ target_link_libraries(mendel
   ICU::uc
   ICU::data
   Iconv::Iconv
-  PkgConfig::ZLib )
+  ZLIB::ZLIB )
 
 add_yy_tidy_all(mendel)
