@@ -26,8 +26,8 @@
 
 #include <charconv>
 
-#include "fmt/format.h"
 #include "fmt/compile.h"
+#include "fmt/format.h"
 #include "spdlog/spdlog.h"
 
 #include "yy_cpp/yy_find_iter_util.hpp"
@@ -58,25 +58,26 @@ constexpr auto g_ouput_value_id{"{}:{}"_cf};
 
 constexpr auto g_predict_interval{timestamp_type{std::chrono::seconds(60)}};
 
-} // anonymous
+} // namespace
 
 KalmanAction::KalmanAction(std::string_view p_id,
                            std::string_view p_output_topic,
                            std::string_view p_output_value_id,
-                           const KalmanOptions & p_options):
+                           const KalmanOptions & p_options) :
   m_id(std::move(p_id)),
   m_output_topic(std::move(p_output_topic))
 {
-  auto calc_output_value_id = [&p_output_value_id](auto property) -> yy_values::MetricId {
-    return yy_values::MetricId(fmt::format(g_ouput_value_id, p_output_value_id, property));
+  auto calc_output_value_id =
+    [&p_output_value_id](auto property) -> yy_values::MetricId {
+    return yy_values::MetricId(
+      fmt::format(g_ouput_value_id, p_output_value_id, property));
   };
   // Initialise outputs.
   size_type idx_n = 0;
 
-  for(const auto & [input_id, output_id, accuracy] : p_options)
+  for(const auto & [input_id, output_id, _]: p_options)
   {
-    if(auto output{yy_data::find_iter(m_outputs, output_id)};
-       !output.found)
+    if(auto output{yy_data::find_iter(m_outputs, output_id)}; !output.found)
     {
       auto [iter, _] = m_outputs.emplace(output.iter,
                                          output_id,
@@ -95,25 +96,29 @@ KalmanAction::KalmanAction(std::string_view p_id,
 
   // Initialize inputs.
   size_type idx_m = 0;
-  for(const auto & [input_id, output, accuracy] : p_options)
+  int output_idx;
+  auto compare_input =
+    [&output_idx](const kalman_action_detail::InputMapping & p_mapping,
+                  const yy_values::MetricId & p_input_id) -> int {
+    int comp = p_mapping.value_id.compare(p_input_id);
+
+    if(comp == 0)
+    {
+      comp = static_cast<int>(p_mapping.output_idx) - output_idx;
+    }
+
+    return comp;
+  };
+
+  for(const auto & [input_id, output, _]: p_options)
   {
     if(auto [output_iter, output_found] = yy_data::find_iter(m_outputs, output);
        output_found)
     {
-      auto output_idx = static_cast<int>(output_iter->output_idx);
-      auto compare_input = [output_idx](const kalman_action_detail::InputMapping & p_mapping,
-                                        const yy_values::MetricId & p_input_id) -> int {
-        int comp = p_mapping.value_id.compare(p_input_id);
+      output_idx = static_cast<int>(output_iter->output_idx);
 
-        if(comp == 0)
-        {
-          comp = static_cast<int>(p_mapping.output_idx) - output_idx;
-        }
-
-        return comp;
-      };
-
-      if(auto [input_iter, input_found] = yy_data::find_iter(m_inputs, input_id, compare_input);
+      if(auto [input_iter, input_found] =
+           yy_data::find_iter(m_inputs, input_id, compare_input);
          !input_found)
       {
         spdlog::info("    input: [{}] out=[{}]"sv,
@@ -129,7 +134,28 @@ KalmanAction::KalmanAction(std::string_view p_id,
   // Compact inputs.
   InputMap{m_inputs}.swap(m_inputs);
 
-  m_ekf = yy_maths::ekf{m_inputs.size(), m_outputs.size()};
+  // Configure measurement noise.
+  vector r{m_inputs.size()};
+
+  for(const auto & [input_id, output, accuracy]: p_options)
+  {
+    if(auto [output_iter, output_found] = yy_data::find_iter(m_outputs, output);
+       output_found)
+    {
+      output_idx = static_cast<int>(output_iter->output_idx);
+      if(auto [input_iter, input_found] =
+           yy_data::find_iter(m_inputs, input_id, compare_input);
+         input_found)
+      {
+        auto idx =
+          static_cast<vector::size_type>(input_iter - m_inputs.begin());
+        r[idx] = accuracy;
+        spdlog::debug("   accuracy: input: [{}]=[{}]"sv, input_id, r[idx]);
+      }
+    }
+  }
+
+  m_ekf = yy_maths::ekf{m_inputs.size(), m_outputs.size(), r};
   m_observations.resize(m_ekf.M());
 
   // Zero mapping sensor-function Jacobian matrix h.
@@ -152,9 +178,12 @@ void KalmanAction::Run(const ParamVector & p_params,
     z = value;
   };
 
-  for(auto & input : m_inputs)
+  for(auto & input: m_inputs)
   {
-    if(const auto [param_iter, param_found] = yy_data::find_iter(p_params, input.value_id, actions_detail::compare_param);
+    if(const auto [param_iter, param_found] =
+         yy_data::find_iter(p_params,
+                            input.value_id,
+                            actions_detail::compare_param);
        param_found)
     {
       input.initialized = true;
@@ -163,33 +192,31 @@ void KalmanAction::Run(const ParamVector & p_params,
       m_hx(input.input_idx) = m_ekf.X(input.output_idx);
       auto & z = m_observations(input.input_idx);
 
-      auto param_set_observation = [&input, &z, &set_observation](value_type value) {
-        set_observation("parameter"sv,
-                        input.value_id,
-                        z,
-                        value);
-      };
+      auto param_set_observation =
+        [&input, &z, &set_observation](value_type value) {
+          set_observation("parameter"sv, input.value_id, z, value);
+        };
 
       std::visit(param_set_observation, (*param_iter)->Binary());
     }
     else if(input.initialized)
     {
-      auto store_set_observation = [this, &input, &set_observation](auto value) {
-        m_hx(input.input_idx) = m_ekf.X(input.output_idx);
-        auto & z = m_observations(input.input_idx);
+      auto store_set_observation =
+        [this, &input, &set_observation](auto value) {
+          m_hx(input.input_idx) = m_ekf.X(input.output_idx);
+          auto & z = m_observations(input.input_idx);
 
-        set_observation("store"sv,
-                        input.value_id,
-                        z,
-                        value->load(std::memory_order_acquire));
-      };
+          set_observation("store"sv,
+                          input.value_id,
+                          z,
+                          value->load(std::memory_order_acquire));
+        };
 
       std::ignore = p_values_store.Find(store_set_observation, input.value_id);
     }
   }
 
   spdlog::debug("  inputs  : [{:.2f}]"sv, m_observations);
-  //spdlog::debug("  mappings: [{:.0f}]"sv, m_h);
   spdlog::debug("  previous: [{:.2f}]"sv, m_ekf.X());
 
   m_ekf.predict();
@@ -199,7 +226,7 @@ void KalmanAction::Run(const ParamVector & p_params,
   m_result.topic = m_output_topic;
   m_result.data = "{"sv;
 
-  for(auto & output : m_outputs)
+  for(auto & output: m_outputs)
   {
     auto ekf_Xn = m_ekf.X(output.output_idx);
 
@@ -215,9 +242,10 @@ void KalmanAction::Run(const ParamVector & p_params,
                    ekf_Xn);
   }
 
-  fmt::format_to(std::back_inserter(m_result.data),
-                 g_timestamp_format,
-                 std::chrono::duration_cast<std::chrono::microseconds>(p_timestamp).count());
+  fmt::format_to(
+    std::back_inserter(m_result.data),
+    g_timestamp_format,
+    std::chrono::duration_cast<std::chrono::microseconds>(p_timestamp).count());
 
   spdlog::debug("  result  : json=[{}]"sv, m_result.data);
 
