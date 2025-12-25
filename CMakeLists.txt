@@ -129,4 +129,4 @@ target_link_libraries(mendel
   Iconv::Iconv
   ZLIB::ZLIB )
 
-add_yy_tidy_all(mendel)
+add_yy_tidy_targets(mendel)
