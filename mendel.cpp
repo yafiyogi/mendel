@@ -34,7 +34,7 @@
 
 #include "boost/program_options.hpp"
 #include "fmt/ostream.h"
-#include "mosquittopp.h"
+#include "mosquitto/libmosquittopp.h"
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/daily_file_sink.h"
 

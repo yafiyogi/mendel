@@ -33,7 +33,7 @@
 
 #include <memory>
 
-#include "mosquittopp.h"
+#include "mosquitto/libmosquittopp.h"
 
 #include "yy_values/yy_values_labels.hpp"
 

@@ -32,7 +32,7 @@
 #include <string>
 #include <string_view>
 
-#include "mosquittopp.h"
+#include "mosquitto/libmosquittopp.h"
 
 #include "actions_result_queue.hpp"
 
