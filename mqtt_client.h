@@ -86,7 +86,6 @@ class mqtt_client final:
     yy_values::MetricDataVector m_metric_data{};
     values::MetricDataQueueWriter m_cache_queue{};
     std::atomic<bool> m_is_connected = false;
-    std::atomic<bool> m_stop = false;
 };
 
 } // namespace yafiyogi::mendel

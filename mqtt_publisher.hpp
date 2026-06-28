@@ -46,8 +46,7 @@ class mqtt_publisher final:
   public:
     mqtt_publisher(mqtt_config & p_config,
                    actions::ActionResultQueueReader && p_queue);
-    void Run(std::stop_token p_stop_token);
-    void stop();
+    void run(std::stop_token p_stop_token);
     bool is_connected() noexcept;
     void on_connect(int rc) override;
     void on_publish(int mid) override;

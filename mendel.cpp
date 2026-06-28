@@ -100,8 +100,8 @@ int main(int argc, char* argv[])
   using namespace yafiyogi;
   using namespace std::string_view_literals;
 
-  std::signal(SIGINT, signal_handler);
-  std::signal(SIGTERM, signal_handler);
+  std::signal(SIGINT, yafiyogi::signal_handler);
+  std::signal(SIGTERM, yafiyogi::signal_handler);
 
   mendel::logger_config log_config{std::string{mendel::g_default_file_path}, spdlog::level::debug};
   spdlog::set_level(log_config.level);
@@ -202,15 +202,13 @@ int main(int argc, char* argv[])
 
   if(!no_run)
   {
-    mosqpp::lib_init();
-
     // MQTT Publisher
     auto actions_results_queue{std::make_shared<actions::ActionResultQueue>()};
     auto mqtt_publisher{std::make_shared<mendel::mqtt_publisher>(mqtt_publisher_config,
                                                                  actions::ActionResultQueueReader{actions_results_queue})};
 
     std::jthread publisher_thread{[&mqtt_publisher](std::stop_token p_stop_token) {
-      mqtt_publisher->Run(p_stop_token);
+      mqtt_publisher->run(p_stop_token);
     }};
 
     // Actions Handler
@@ -232,12 +230,13 @@ int main(int argc, char* argv[])
       cache_handler->Run(p_stop_token);
     }};
 
-    // MQTT Client
+    mosqpp::lib_init();
+
     ClientPtr client;
     auto do_create_client = [&client, &mqtt_config, &mqtt_client_config, &cache_queue](auto & p_mendel_state) {
       if(!p_mendel_state.exit_program)
       {
-        client =  std::make_unique<mendel::mqtt_client>(mqtt_config,
+        client = std::make_shared<mendel::mqtt_client>(mqtt_config,
                                                         mqtt_client_config,
                                                         values::MetricDataQueueWriter{cache_queue});
 
@@ -245,15 +244,19 @@ int main(int argc, char* argv[])
       }
     };
 
-    LockMendelState::visit(g_mendel_state, do_create_client);
-
-    if(client)
+    try
     {
-      client->run();
+      LockMendelState::visit(g_mendel_state, do_create_client);
 
-      LockMendelState::visit(g_mendel_state, [](auto & p_mendel_state) {
-        p_mendel_state.client.reset();
-      });
+      client->run();
+    }
+    catch(const std::exception & ex)
+    {
+      spdlog::critical("Exception caught [{}]"sv, ex.what());
+    }
+    catch(...)
+    {
+      spdlog::critical("Exception caught!"sv);
     }
 
     cache_thread.request_stop();
@@ -271,7 +274,7 @@ int main(int argc, char* argv[])
     mosqpp::lib_cleanup();
   }
 
-  spdlog::info(" Ende"sv);
+  spdlog::info("Ende"sv);
   mendel::stop_all_logs();
 
   return 0;

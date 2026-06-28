@@ -92,7 +92,7 @@ size_type mqtt_publisher::ProcessInQueue(size_type spin,
   return spin;
 }
 
-void mqtt_publisher::Run(std::stop_token p_stop_token)
+void mqtt_publisher::run(std::stop_token p_stop_token)
 {
   reconnect_delay_set(std::chrono::duration_cast<std::chrono::seconds>(default_reconnect_delay).count(),
                       std::chrono::duration_cast<std::chrono::seconds>(default_reconnect_delay).count(),
@@ -127,12 +127,7 @@ void mqtt_publisher::Run(std::stop_token p_stop_token)
 
   disconnect();
 
-  loop_stop();
-
-  while(is_connected())
-  {
-    std::this_thread::sleep_for(default_disconnect_sleep);
-  }
+  loop_stop(false);
 }
 
 bool mqtt_publisher::is_connected() noexcept

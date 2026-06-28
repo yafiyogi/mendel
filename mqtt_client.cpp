@@ -69,22 +69,16 @@ mqtt_client::mqtt_client(mqtt_config & p_config,
 
 void mqtt_client::run()
 {
+  reconnect_delay_set(2,
+                      default_reconnect_delay_seconds.count(),
+                      false);
   connect(m_host.c_str(),
           m_port,
           std::chrono::duration_cast<std::chrono::seconds>(default_keepalive_seconds).count());
 
   try
   {
-    while(!m_stop.load(std::memory_order_acquire))
-    {
-      if(auto rc = loop();
-         0 != rc)
-      {
-        std::this_thread::sleep_for(default_reconnect_delay_seconds);
-        spdlog::info(" MQTT Client reconnect [{}]"sv, rc);
-        reconnect();
-      }
-    }
+    loop_forever();
   }
   catch(const std::exception & ex)
   {
@@ -101,6 +95,11 @@ void mqtt_client::run()
   {
     std::this_thread::sleep_for(default_disconnect_sleep);
   }
+}
+
+void mqtt_client::stop()
+{
+  disconnect();
 }
 
 void mqtt_client::on_connect(int rc)
@@ -175,11 +174,6 @@ void mqtt_client::on_message(const struct mosquitto_message * message)
 
     m_cache_queue.QSwapIn(m_metric_data);
   }
-}
-
-void mqtt_client::stop()
-{
-  m_stop.store(true, std::memory_order_release);
 }
 
 bool mqtt_client::is_connected() noexcept
